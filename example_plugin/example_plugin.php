@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * @title Example Plugin
+ * @author Valware
+ * @version 1.0
+ * @icon screenshots/icon.png
+ * @screenshot screenshots/example_plugin.png,screenshots/example_plugin2.png
+*/
+
 class example_plugin
 {
 	public $name = "Example plugin";
