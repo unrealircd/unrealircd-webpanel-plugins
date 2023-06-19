@@ -3,7 +3,12 @@
 /**
   @title Example Plugin
   @author Valware
+  @contact valerie@valware.co.uk
   @version 1.0
+  @tested 0.9
+  @minver 0.9
+  @maxver *
+  @license GPLv3
   @icon screenshots/icon.png
   @screenshot screenshots/example_plugin.png
   @screenshot screenshots/example_plugin2.png
