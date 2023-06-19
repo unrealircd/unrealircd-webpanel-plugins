@@ -7,6 +7,7 @@
   @version 1.0
   @tested 0.9
   @minver 0.9
+  @icon https://w7.pngwing.com/pngs/78/575/png-transparent-phpmailer-hd-logo.png
   @maxver *
   @license GPLv3
 */
