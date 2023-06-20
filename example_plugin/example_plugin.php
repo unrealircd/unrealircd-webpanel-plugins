@@ -3,6 +3,7 @@
 /**
   @title Example Plugin
   @author Valware
+  @description This plugin adds an example page and does nothing special by itself. Have a nice day!
   @contact valerie@valware.co.uk
   @version 1.0
   @tested 0.9
