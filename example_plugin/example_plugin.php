@@ -10,7 +10,7 @@
   @minver 0.9
   @maxver *
   @license GPLv3
-  @icon screenshots/icon.png
+  @icon https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/example_plugin/screenshots/example_icon.png?raw=true
   @screenshot screenshots/example_plugin.png
   @screenshot screenshots/example_plugin2.png
 */
