@@ -21,7 +21,7 @@
   @maxver *
   @license GPLv3
   @icon https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/example_plugin/screenshots/example_icon.png?raw=true
-  @screenshot https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/example_plugin/screenshots/example_plugin.jpg
+  @screenshot https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/example_plugin/screenshots/example_plugin.jpg?raw=true
   @screenshot https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/example_plugin/screenshots/example_plugin2.jpg?raw=true
 */
 
