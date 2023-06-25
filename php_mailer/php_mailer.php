@@ -16,7 +16,7 @@ use PHPMailer\PHPMailer\SMTP;
 
 class php_mailer
 {
-	public $name = "PHPMailer()";
+	public $name = "php_mailer";
 	public $author = "Valware";
 	public $version = "1.0";
 	public $description = "Send mail using PHPMailer()";
