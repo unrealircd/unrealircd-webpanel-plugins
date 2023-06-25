@@ -63,7 +63,7 @@ class example_plugin
 	{
 		$page_name = "Example";
 		$page_link = "plugins/example_plugin/example.php";
-		$pages[$page_name] = $page_link;
+		$pages[$page_name] = ["script" => $page_link, "no_irc_server_required" => true];
 	}
 }
 
