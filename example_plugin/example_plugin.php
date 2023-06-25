@@ -30,7 +30,7 @@ class example_plugin
 	/* You must specify these here for internal use
  	 * All of these are mandatory or your plugin will not work.
  	*/
-	public $name = "Example plugin"; // Name of your plugin
+	public $name = "example_plugin"; // Name of your plugin
 	public $author = "Valware"; // Name or handle of your lovely self
 	public $version = "1.0"; // Version of this plugin
 	public $description = "An example plugin to show how to make stuff"; // Description of your beautiful plugin
