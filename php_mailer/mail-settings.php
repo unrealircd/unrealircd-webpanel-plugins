@@ -8,7 +8,6 @@ if (!current_user_can(PERMISSION_MANAGE_PLUGINS))
 	require_once "../../inc/footer.php";
 	die();
 }
-var_dump($_POST);
 foreach($_POST as $key => $value)
 {
 	if ($key == "fromEmail")
@@ -21,6 +20,10 @@ foreach($_POST as $key => $value)
 		$config['smtp']['host'];
 	elseif ($key == "port")
 		$config['smpt']['port'];
+	elseif ($key == "smtpEnc")
+		$config['smpt']['smtpEnc'];
+
+	write_config('smpt');
 }
 ?>
 
