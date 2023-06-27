@@ -4,8 +4,8 @@
   @author Valware
   @contact valerie@valware.co.uk
   @description Provides support for PHPMailer() to send emails you care about
-  @version 1.0
-  @tested 1.0
+  @version 1.1
+  @tested 0.9
   @minver 0.9
   @icon https://w7.pngwing.com/pngs/78/575/png-transparent-phpmailer-hd-logo.png
   @maxver *
