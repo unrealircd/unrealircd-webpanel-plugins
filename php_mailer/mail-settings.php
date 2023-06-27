@@ -8,7 +8,7 @@ if (!current_user_can(PERMISSION_MANAGE_PLUGINS))
 	require_once "../../inc/footer.php";
 	die();
 }
-
+var_dump($_GET);
 ?>
 
 
@@ -42,9 +42,10 @@ if (!current_user_can(PERMISSION_MANAGE_PLUGINS))
 		<div class="form-group row">
 			<label for="smtpHost" class="col-sm-2 col-form-label">SMTP Port</label>
 			<div class="col-sm-10">
-				<input type="number" class="form-control" id="smtpPort">
+				<input type="text" class="form-control" id="smtpPort">
 			</div>
 		</div>
+		<input type="submit" class="btn btn-primary" value="Submit" name="Submit">
 	</form></div>
 <?php
 require_once "../../inc/footer.php";
