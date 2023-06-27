@@ -36,7 +36,7 @@ class cursed
 	{
 		?>
 		<style>
-			body {
+			.emoji {
 				position:absolute;
 				pointer-events: none;
 				animation: animate 1s linear infinite;
