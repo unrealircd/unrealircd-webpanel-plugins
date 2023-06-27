@@ -23,7 +23,7 @@ foreach($_POST as $key => $value)
 	elseif ($key == "smtpEnc")
 		$config['smtp']['smtpEnc'];
 
-	write_config();
+	write_config('smtp');
 }
 ?>
 
