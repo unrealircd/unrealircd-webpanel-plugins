@@ -58,22 +58,24 @@ foreach($_POST as $key => $value)
 				<input type="text" class="form-control" id="smtpPort" name="smtpPort" value="<?php echo get_config("smtp::port") ?>">
 			</div>
 		</div>
-		<div class="form-check">
-			<input class="form-check-input" type="radio" name="smtpEnc" id="radioOne" value="TLS" checked>
-			<label class="form-check-label" for="radioOne">
-			TLS Encryption <i>(Recommended)</i>
-			</label>
+		<div class="col">
+			<div class="form-check">
+				<input class="form-check-input" type="radio" name="smtpEnc" id="radioOne" value="TLS" checked>
+				<label class="form-check-label" for="radioOne">
+				TLS Encryption <i>(Recommended)</i>
+				</label>
+			</div>
+			<div class="form-check">
+				<input class="form-check-input" type="radio" name="smtpEnc" id="radioTwo" value="SSL">
+				<label class="form-check-label" for="radioTwo">
+					SSL Encryption
+				</label>
+			</div>
 		</div>
-		<div class="form-check">
-			<input class="form-check-input" type="radio" name="smtpEnc" id="radioTwo" value="SSL">
-			<label class="form-check-label" for="radioTwo">
-				SSL Encryption
-			</label>
-		</div>
-
-
-		<div class="float-right">
-			<input type="submit" class="btn btn-primary" value="Submit">
+		<div class="col">
+			<div class="float-right">
+				<input type="submit" class="btn btn-primary" value="Submit">
+			</div>
 		</div>
 	</form>
 </div>
