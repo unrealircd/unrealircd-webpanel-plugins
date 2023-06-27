@@ -13,7 +13,7 @@ if (!current_user_can(PERMISSION_MANAGE_PLUGINS))
 
 
 <h4>Mail Settings</h4>
-<div class="card">
+<div class="card"  style="width: 18rem;">
 	<form method="post" autocomplete="off" enctype="multipart/form-data">
 		<div class="form-group row">
 			<label for="fromEmail" class="col-sm-2 col-form-label">Email</label>
