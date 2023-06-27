@@ -18,34 +18,34 @@ var_dump($_POST);
 		<div class="form-group row">
 			<label for="fromEmail" class="col-sm-2 col-form-label">Email</label>
 			<div class="col-sm-10">
-				<input type="email" class="form-control" id="fromEmail">
+				<input type="email" class="form-control" id="fromEmail" name="fromEmail">
 			</div>
 		</div>
 		<div class="form-group row">
 			<label for="smtpPass" class="col-sm-2 col-form-label">Email Password</label>
 			<div class="col-sm-10">
-				<input type="password" class="form-control" id="smtpPass">
+				<input type="password" class="form-control" id="smtpPass" name="smtpPass">
 			</div>
 		</div>
 		<div class="form-group row">
 			<label for="fromName" class="col-sm-2 col-form-label">From Name</label>
 			<div class="col-sm-10">
-				<input type="text" class="form-control" id="fromName">
+				<input type="text" class="form-control" id="fromName" name="fromName">
 			</div>
 		</div>
 		<div class="form-group row">
 			<label for="smtpHost" class="col-sm-2 col-form-label">SMTP Host</label>
 			<div class="col-sm-10">
-				<input type="text" class="form-control" id="smtpHost">
+				<input type="text" class="form-control" id="smtpHost" name="smtpHost">
 			</div>
 		</div>
 		<div class="form-group row">
 			<label for="smtpHost" class="col-sm-2 col-form-label">SMTP Port</label>
 			<div class="col-sm-10">
-				<input type="text" class="form-control" id="smtpPort">
+				<input type="text" class="form-control" id="smtpPort" name="smtpPort">
 			</div>
 		</div>
-		<input type="submit" class="btn btn-primary" value="Submit" name="Submit">
+		<input type="submit" class="btn btn-primary" value="Submit">
 	</form></div>
 <?php
 require_once "../../inc/footer.php";
