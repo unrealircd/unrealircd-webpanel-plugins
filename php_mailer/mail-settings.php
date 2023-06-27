@@ -13,7 +13,7 @@ var_dump($_POST);
 
 
 <h4>Mail Settings</h4>
-<div class="card card-body mb-3">
+<div class="card card-body mb-3" style="max-width:50%">
 	<form method="post" action="mail-settings.php" autocomplete="off" enctype="multipart/form-data">
 		<div class="form-group row">
 			<label for="fromEmail" class="col-sm-2 col-form-label">Email</label>
