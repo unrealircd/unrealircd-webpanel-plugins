@@ -14,7 +14,7 @@ foreach($_POST as $key => $value)
 	if ($key == "fromEmail")
 		$config['smtp']["username"] = $value;
 	elseif ($key == "smtpPass")
-		$config['smtp']['smtpPass'] = $value;
+		$config['smtp']['password'] = $value;
 	elseif ($key == "fromName")
 		$config['smtp']['from_name'] = $value;
 	elseif ($key == "smtpHost")
