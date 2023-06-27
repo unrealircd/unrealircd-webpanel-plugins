@@ -18,7 +18,7 @@ class php_mailer
 {
 	public $name = "php_mailer";
 	public $author = "Valware";
-	public $version = "1.0";
+	public $version = "1.1";
 	public $description = "Send mail using PHPMailer()";
 	public $email = "v.a.pond@outlook.com";
 
