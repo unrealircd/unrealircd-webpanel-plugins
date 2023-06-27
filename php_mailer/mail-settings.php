@@ -13,38 +13,38 @@ if (!current_user_can(PERMISSION_MANAGE_PLUGINS))
 
 
 <h4>Mail Settings</h4>
-
-<form method="post" autocomplete="off" enctype="multipart/form-data">
-	<div class="form-group row">
-		<label for="fromEmail" class="col-sm-2 col-form-label">Email</label>
-		<div class="col-sm-10">
-			<input type="email" class="form-control" id="fromEmail">
+<div class="card">
+	<form method="post" autocomplete="off" enctype="multipart/form-data">
+		<div class="form-group row">
+			<label for="fromEmail" class="col-sm-2 col-form-label">Email</label>
+			<div class="col-sm-10">
+				<input type="email" class="form-control" id="fromEmail">
+			</div>
 		</div>
-	</div>
-	<div class="form-group row">
-		<label for="smtpPass" class="col-sm-2 col-form-label">Email Password</label>
-		<div class="col-sm-10">
-			<input type="password" class="form-control" id="smtpPass">
+		<div class="form-group row">
+			<label for="smtpPass" class="col-sm-2 col-form-label">Email Password</label>
+			<div class="col-sm-10">
+				<input type="password" class="form-control" id="smtpPass">
+			</div>
 		</div>
-	</div>
-	<div class="form-group row">
-		<label for="fromName" class="col-sm-2 col-form-label">From Name</label>
-		<div class="col-sm-10">
-			<input type="text" class="form-control" id="fromName">
+		<div class="form-group row">
+			<label for="fromName" class="col-sm-2 col-form-label">From Name</label>
+			<div class="col-sm-10">
+				<input type="text" class="form-control" id="fromName">
+			</div>
 		</div>
-	</div>
-	<div class="form-group row">
-		<label for="smtpHost" class="col-sm-2 col-form-label">SMTP Host</label>
-		<div class="col-sm-10">
-			<input type="text" class="form-control" id="smtpHost">
+		<div class="form-group row">
+			<label for="smtpHost" class="col-sm-2 col-form-label">SMTP Host</label>
+			<div class="col-sm-10">
+				<input type="text" class="form-control" id="smtpHost">
+			</div>
 		</div>
-	</div>
-	<div class="form-group row">
-		<label for="smtpHost" class="col-sm-2 col-form-label">SMTP Port</label>
-		<div class="col-sm-10">
-			<input type="number" class="form-control" id="smtpPort">
+		<div class="form-group row">
+			<label for="smtpHost" class="col-sm-2 col-form-label">SMTP Port</label>
+			<div class="col-sm-10">
+				<input type="number" class="form-control" id="smtpPort">
+			</div>
 		</div>
-	</div>
-</form>
+	</form></div>
 <?php
 require_once "../../inc/footer.php";
