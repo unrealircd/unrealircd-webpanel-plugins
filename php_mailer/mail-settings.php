@@ -13,15 +13,15 @@ foreach($_POST as $key => $value)
 	if ($key == "fromEmail")
 		$config['smtp']["username"];
 	elseif ($key == "smtpPass")
-		$config['smpt']['smtpPass'];
+		$config['smtp']['smtpPass'];
 	elseif ($key == "fromName")
-		$config['smpt']['from_name'];
+		$config['smtp']['from_name'];
 	elseif ($key == "smtpHost")
 		$config['smtp']['host'];
 	elseif ($key == "port")
-		$config['smpt']['port'];
+		$config['smtp']['port'];
 	elseif ($key == "smtpEnc")
-		$config['smpt']['smtpEnc'];
+		$config['smtp']['smtpEnc'];
 
 	write_config();
 }
