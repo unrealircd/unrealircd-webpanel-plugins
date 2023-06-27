@@ -19,7 +19,7 @@ foreach($_POST as $key => $value)
 		$config['smtp']['from_name'] = $value;
 	elseif ($key == "smtpHost")
 		$config['smtp']['host'] = $value;
-	elseif ($key == "port")
+	elseif ($key == "smtpPort")
 		$config['smtp']['port'] = $value;
 	elseif ($key == "smtpEnc")
 		$config['smtp']['smtpEnc'] = $value;
