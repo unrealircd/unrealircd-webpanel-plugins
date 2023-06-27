@@ -14,7 +14,7 @@ var_dump($_POST);
 
 <h4>Mail Settings</h4>
 <div class="card card-body mb-3">
-	<form method="post" autocomplete="off" enctype="multipart/form-data">
+	<form method="post" action="" autocomplete="off" enctype="multipart/form-data">
 		<div class="form-group row">
 			<label for="fromEmail" class="col-sm-2 col-form-label">Email</label>
 			<div class="col-sm-10">
