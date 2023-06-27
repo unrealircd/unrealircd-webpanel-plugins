@@ -22,7 +22,7 @@ foreach($_POST as $key => $value)
 	elseif ($key == "smtpPort")
 		$config['smtp']['port'] = $value;
 	elseif ($key == "smtpEnc")
-		$config['smtp']['smtpEnc'] = $value;
+		$config['smtp']['encryption'] = $value;
 
 	write_config();
 }
