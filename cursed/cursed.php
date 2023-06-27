@@ -39,7 +39,6 @@ class cursed
 			.emoji {
 				position:absolute;
 				pointer-events: none;
-				background: #f00;
 				animation: animate 1s linear infinite;
 			}
 			@keyframes animate {
