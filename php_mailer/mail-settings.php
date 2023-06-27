@@ -8,7 +8,7 @@ if (!current_user_can(PERMISSION_MANAGE_PLUGINS))
 	require_once "../../inc/footer.php";
 	die();
 }
-var_dump($_GET);
+var_dump($_POST);
 ?>
 
 
