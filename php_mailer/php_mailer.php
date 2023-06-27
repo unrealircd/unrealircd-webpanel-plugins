@@ -26,6 +26,7 @@ class php_mailer
 	{
 		Hook::func(HOOKTYPE_USER_LOGIN, 'php_mailer::user_login_notif');
 		Hook::func(HOOKTYPE_USER_LOGIN_FAIL, 'php_mailer::user_login_fail_notif');
+		Hook::func(HOOKTYPE_NAVBAR, 'php_mailer::navbar_hook');
 	}
 
 	public static function send_mail($to, $subject, $body)
@@ -84,12 +85,20 @@ class php_mailer
 				"If this was not you, please contact your Panel Administrator."
 			);
 	}
+
+	/**
+	 * Send a notification about the failed attempt
+	 */
 	public static function user_login_fail_notif($fail)
 	{
 		self::send_mail(
 			["email" => get_config("smtp::username"), "name" => get_config("smtp::from_name")],
 			"Failed login attempt - Unreal Admin Panel",
-			"There was a failed login attempt to the admin panel.<br>User: \"".$fail['login']."\"<br>IP: \"".$fail['IP']."\""
+			"-- ADMIN NOTIFICATION --, <br><br>".
+			"There was failed login attempt to account: \"$user->username\"<br><br>".
+			"Details:<br>".
+			"IP: ".$_SERVER['REMOTE_ADDR']." (".$_SERVER['HTTP_CF_IPCOUNTRY'].")<br>".
+			"User Agent: ".$_SERVER['HTTP_USER_AGENT']."<br><br>"
 		);
 		$user = new PanelUser($fail['login']);
 		if ($user->email)
@@ -103,5 +112,12 @@ class php_mailer
 				"User Agent: ".$_SERVER['HTTP_USER_AGENT']."<br><br>".
 				"If this was not you, please contact your Panel Administrator."
 			);
+	}
+
+	public static function navbar_hook(&$pages)
+	{
+		$page_name = "Mail";
+		$page_link = "plugins/php_mailer/mail-settings.php";
+		$pages["Settings"][$page_name] = ["script" => $page_link];
 	}
 }
