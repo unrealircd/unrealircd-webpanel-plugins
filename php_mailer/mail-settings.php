@@ -10,6 +10,7 @@ if (!current_user_can(PERMISSION_MANAGE_PLUGINS))
 }
 foreach($_POST as $key => $value)
 {
+	var_dump($key,$value);
 	if ($key == "fromEmail")
 		$config['smtp']["username"];
 	elseif ($key == "smtpPass")
