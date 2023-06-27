@@ -10,7 +10,7 @@ if (!current_user_can(PERMISSION_MANAGE_PLUGINS))
 }
 foreach($_POST as $key => $value)
 {
-	var_dump($key,$value);
+	var_dump("duck",$key,$value);
 	if ($key == "fromEmail")
 		$config['smtp']["username"];
 	elseif ($key == "smtpPass")
@@ -24,7 +24,7 @@ foreach($_POST as $key => $value)
 	elseif ($key == "smtpEnc")
 		$config['smtp']['smtpEnc'];
 
-	write_config_file();
+	write_config();
 }
 ?>
 
