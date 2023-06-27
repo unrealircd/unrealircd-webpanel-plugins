@@ -2,7 +2,7 @@
 /**
   @title Emoji Trail
   @author Valware
-  @description This plugin is emoji_trail.
+  @description This plugin makes an emoji trail from your mouse cursor.
   @contact valerie@valware.co.uk
   @version 1.0
   @tested 0.9
