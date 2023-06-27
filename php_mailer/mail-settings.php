@@ -11,19 +11,18 @@ if (!current_user_can(PERMISSION_MANAGE_PLUGINS))
 global $config;
 foreach($_POST as $key => $value)
 {
-	var_dump("fish",$key,$value);
 	if ($key == "fromEmail")
-		$config['smtp']["username"];
+		$config['smtp']["username"] = $value;
 	elseif ($key == "smtpPass")
-		$config['smtp']['smtpPass'];
+		$config['smtp']['smtpPass'] = $value;
 	elseif ($key == "fromName")
-		$config['smtp']['from_name'];
+		$config['smtp']['from_name'] = $value;
 	elseif ($key == "smtpHost")
-		$config['smtp']['host'];
+		$config['smtp']['host'] = $value;
 	elseif ($key == "port")
-		$config['smtp']['port'];
+		$config['smtp']['port'] = $value;
 	elseif ($key == "smtpEnc")
-		$config['smtp']['smtpEnc'];
+		$config['smtp']['smtpEnc'] = $value;
 
 	write_config();
 }
