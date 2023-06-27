@@ -8,9 +8,10 @@ if (!current_user_can(PERMISSION_MANAGE_PLUGINS))
 	require_once "../../inc/footer.php";
 	die();
 }
+global $config;
 foreach($_POST as $key => $value)
 {
-	var_dump("duck",$key,$value);
+	var_dump("fish",$key,$value);
 	if ($key == "fromEmail")
 		$config['smtp']["username"];
 	elseif ($key == "smtpPass")
