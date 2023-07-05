@@ -4,7 +4,7 @@
   @author Valware
   @description This plugin makes an emoji trail from your mouse cursor.
   @contact valerie@valware.co.uk
-  @version 1.0
+  @version 1.1
   @tested 0.9
   @minver 0.9
   @maxver *
@@ -20,7 +20,7 @@ class emoji_trail
  	*/
 	public $name = "emoji_trail"; // Name of your plugin
 	public $author = "Valware"; // Name or handle of your lovely self
-	public $version = "1.0"; // Version of this plugin
+	public $version = "1.1"; // Version of this plugin
 	public $description = "Adds emoji_trail stuff"; // Description of your beautiful plugin
 	public $email = "v.a.pond@outlook.com"; // An email people can contact you with in case of problems
 
@@ -30,7 +30,7 @@ class emoji_trail
 	function __construct()
 	{
 		
-		Hook::func(HOOKTYPE_PRE_HEADER, 'emoji_trail::do_emoji_trail_shit'); 
+		Hook::func(HOOKTYPE_HEADER, 'emoji_trail::do_emoji_trail_shit'); 
 	}
 
 	public static function do_emoji_trail_shit(&$pages)
