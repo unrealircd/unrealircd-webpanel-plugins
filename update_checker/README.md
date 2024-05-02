@@ -1,0 +1,1 @@
+This feature enables the display of an 'Update Checker' section with an update button. As soon as an update is available from the official repository, it automatically updates it using 'git pull', without the need to open an SSH client.
