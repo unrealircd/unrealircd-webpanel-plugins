@@ -10,9 +10,7 @@
   @minver 0.9
   @maxver *
   @license GPLv3
-  @icon https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/mute/screenshots/example_icon.png?raw=true
-  @screenshot https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/mute/screenshots/mute2.jpg?raw=true
-  @screenshot https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/mute/screenshots/mute.jpg?raw=true
+  @icon https://static.thenounproject.com/png/10454-200.png
 */
 
 class mute
