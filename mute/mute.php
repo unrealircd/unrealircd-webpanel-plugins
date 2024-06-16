@@ -1,7 +1,7 @@
 <?php
 
 /**
-  @title Example Plugin
+  @title Mute Users
   @author Valware
   @description View a list of users who are muted (requires third/mute)
   @contact valerie@valware.co.uk
