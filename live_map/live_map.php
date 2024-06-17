@@ -11,7 +11,7 @@
   @maxver *
   @license GPLv3
   @icon https://cdn-icons-png.flaticon.com/512/235/235861.png
-  @screenshot https://i.ibb.co/Jpprjzy/Screenshot-from-2024-06-17-23-38-43.png
+  @screenshot https://i.ibb.co/0qXDNHv/image.png
 */
 
 class live_map
