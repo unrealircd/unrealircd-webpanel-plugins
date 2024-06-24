@@ -314,7 +314,7 @@ for (let i = 0; users[i] != null; i++)
         let v = document.getElementsByClassName('country-'+cc)[0];
         v.innerHTML = ++countrycounts[cc];
     }
-    else {
+    else if (coords != undefined) {
         countrycounts[cc] = 1;
         var numberIcon = L.divIcon({
             className: 'number-icon country-'+cc,
