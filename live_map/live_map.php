@@ -5,7 +5,7 @@
   @author Valware
   @description View a world map showing how many connections you have from each country
   @contact valerie@valware.co.uk
-  @version 1.0
+  @version 1.1
   @tested 0.9
   @minver 0.9
   @maxver *
