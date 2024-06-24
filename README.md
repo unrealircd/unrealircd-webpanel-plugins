@@ -29,7 +29,7 @@ To install a plugin from the repository, you can find the "Add New" button in th
 If you would like to contribute to this repository, please fork the repo, make your changes, and submit a pull request. Contributions are welcome but please ensure that your code is well-documented and tested.
 
 ### License
-This repository is licensed under the GPLv3 License
+This repository is licensed under the GPLv3 License. All contributions to this repository must also be GPLv3 or later.
 
 ### Disclaimer
 The use of these plugins is entirely at your own risk. The maintainers of this repository are not liable for any negative consequences resulting from the use of these plugins. Always exercise caution and make informed decisions when integrating third-party plugins into your systems.
