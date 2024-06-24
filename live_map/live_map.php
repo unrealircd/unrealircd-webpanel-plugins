@@ -52,6 +52,6 @@ class live_map
 	{
 		$page_name = "Live Map";
 		$page_link = "plugins/live_map";
-		$pages["Tools"][$page_name] = ["script" => $page_link, "no_irc_server_required" => true];
+		$pages["Tools"][$page_name] = ["script" => $page_link, "no_irc_server_required" => false];
 	}
 }
