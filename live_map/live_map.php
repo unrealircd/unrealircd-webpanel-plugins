@@ -21,7 +21,7 @@ class live_map
  	*/
 	public $name = "live_map"; // Name of your plugin
 	public $author = "Valware"; // Name or handle of your lovely self
-	public $version = "1.0"; // Version of this plugin
+	public $version = "1.1"; // Version of this plugin
 	public $description = "View a list of users who are live_mapd (requires third/live_map)"; // Description of your beautiful plugin
 	public $email = "v.a.pond@outlook.com"; // An email people can contact you with in case of problems
 
