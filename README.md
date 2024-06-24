@@ -3,7 +3,7 @@
 ## WARNING: USE AT YOUR OWN RISK
 
 ### Overview
-Welcome to the UnrealIRCd WebPanel Plugins repository. This repository contains a collection of plugins for the UnrealIRCd WebPanel, designed to enhance your experience and extend the functionality of your UnrealIRCd WebPanel.
+Welcome to the UnrealIRCd WebPanel Plugins repository. This repository contains a collection of plugins for the UnrealIRCd WebPanel, made by the community with love, designed to enhance your experience and extend the functionality of your UnrealIRCd WebPanel.
 
 ### Important Notice
 **WARNING: USE AT YOUR OWN RISK**
