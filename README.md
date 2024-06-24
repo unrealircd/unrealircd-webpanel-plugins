@@ -23,7 +23,7 @@ These plugins are provided as-is and come with no guarantees or warranties. By u
 - **Stay Updated**: Keep your UnrealIRCd WebPanel, UnrealIRCd server, and plugins updated to the latest versions to mitigate known issues and vulnerabilities.
 
 ### Installation
-To install a plugin, follow the instructions provided in each plugin's individual README file. Generally, this involves copying the plugin files to the appropriate directory and configuring the UnrealIRCd WebPanel to recognize and use the plugin.
+To install a plugin from the repository, you can find the "Add New" button in the Plugins section on the webpanel. If you are creating your own plugin, generally this involves copying the plugin files to the appropriate directory and configuring the UnrealIRCd WebPanel to recognize and use the plugin (`config/config.php`)
 
 ### Contributing
 If you would like to contribute to this repository, please fork the repo, make your changes, and submit a pull request. Contributions are welcome but please ensure that your code is well-documented and tested.
