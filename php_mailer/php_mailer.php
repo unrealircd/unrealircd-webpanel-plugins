@@ -18,7 +18,7 @@ class php_mailer
 {
 	public $name = "php_mailer";
 	public $author = "Valware";
-	public $version = "1.1";
+	public $version = "1.1.1";
 	public $description = "Send mail using PHPMailer()";
 	public $email = "v.a.pond@outlook.com";
 
@@ -89,7 +89,7 @@ class php_mailer
 	/**
 	 * Send a notification about the failed attempt
 	 */
-	public static function user_login_fail_notif($fail)
+	public static function user_login_fail_notif($user)
 	{
 		self::send_mail(
 			["email" => get_config("smtp::username"), "name" => get_config("smtp::from_name")],
@@ -100,7 +100,7 @@ class php_mailer
 			"IP: ".$_SERVER['REMOTE_ADDR']." (".$_SERVER['HTTP_CF_IPCOUNTRY'].")<br>".
 			"User Agent: ".$_SERVER['HTTP_USER_AGENT']."<br><br>"
 		);
-		$user = new PanelUser($fail['login']);
+		$user = new PanelUser($user['login']);
 		if ($user->email)
 			self::send_mail(
 				["email" => $user->email, "name" => $user->first_name . " " . $user->last_name],
