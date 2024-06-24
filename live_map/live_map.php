@@ -5,7 +5,7 @@
   @author Valware
   @description View a world map showing how many connections you have from each country
   @contact valerie@valware.co.uk
-  @version 1.1
+  @version 1.2
   @tested 0.9
   @minver 0.9
   @maxver *
@@ -21,7 +21,7 @@ class live_map
  	*/
 	public $name = "live_map"; // Name of your plugin
 	public $author = "Valware"; // Name or handle of your lovely self
-	public $version = "1.1"; // Version of this plugin
+	public $version = "1.2"; // Version of this plugin
 	public $description = "View a live map of users connected to your network"; // Description of your beautiful plugin
 	public $email = "v.a.pond@outlook.com"; // An email people can contact you with in case of problems
 
