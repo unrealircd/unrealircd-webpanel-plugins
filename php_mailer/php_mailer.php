@@ -4,7 +4,7 @@
   @author Valware
   @contact valerie@valware.co.uk
   @description Provides support for PHPMailer() to send emails you care about
-  @version 1.1.1
+  @version 1.2
   @tested 0.9
   @minver 0.9
   @icon https://w7.pngwing.com/pngs/78/575/png-transparent-phpmailer-hd-logo.png
@@ -18,7 +18,7 @@ class php_mailer
 {
 	public $name = "php_mailer";
 	public $author = "Valware";
-	public $version = "1.1.1";
+	public $version = "1.2";
 	public $description = "Send mail using PHPMailer()";
 	public $email = "v.a.pond@outlook.com";
 
