@@ -6,13 +6,39 @@ require_once(UPATH . "/inc/connection.php");
 global $rpc;
 $users = $rpc->user()->getAll();
 
+function readFileContent($filePath) {
+    $content = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($content === false) {
+        echo "Impossible d'ouvrir le fichier.";
+        return [];
+    }
+    return $content;
+}
+
+$asnFileContent = readFileContent('badasn/list.txt');
+
+function asnExists($asn, $fileContent) {
+    foreach ($fileContent as $line) {
+        if (trim($line) == $asn) {
+            return true;
+        }
+    }
+    return false;
+}
+
 //print_r($users);
 
 ?>
+<style>
+table td, table th {
+  padding: 2px;
+  text-align: center
+}
+</style>
 <div class="container d-flex justify-content-center align-items-center container-center">
     <div class="row">
         <div class="col-md-6 div-item">
-            <h4>Number of ASN duplicates sorted from largest to smallest, also displaying the asname</h4>
+            <h4>Number of ASN duplicates sorted from largest to smallest</h4>
             <?php
             $asnCounts = [];
             foreach ($users as $entry) {
@@ -41,14 +67,15 @@ $users = $rpc->user()->getAll();
 
 
             echo "<table border='1'>";
-            echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th></tr>";
+            echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th><th>Good ASN</th></tr>";
 
             foreach ($asnCounts as $info) {
                 echo "<tr>";
-                echo "<td>" . (empty($info['asn']) ? 'Localhost ?' : $info['asn']) . "</td>";
+                echo "<td>" . (empty($info['asn']) ? '-' : '<a href="WhoisASN.php?asn='.$info['asn'].'">'.$info['asn'].'</a>') . "</td>";
                 echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : $info['asname']) . "</td>";
-                echo "<td>" . (empty($info['country_code']) ? 'Localhost ?' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
+                echo "<td>" . (empty($info['country_code']) ? '-' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
                 echo "<td>{$info['count']}</td>";
+                echo "<td>" . (empty($info['asn']) ? '-' : (asnExists($info['asn'], $asnFileContent) ? '⚠️' : '✅')) . "</td>";
                 echo "</tr>";
             }
 
@@ -107,7 +134,7 @@ $users = $rpc->user()->getAll();
             <?php
             $ipList = [];
             foreach ($users as $key => $obj) {
-                if (isset($obj->ip)) {
+                if (isset($obj->ip) && strpos($obj->ip, ':') !== false) {
                     // Extraire les quatre premiers segments de l'IPv6
                     $ipSegments = explode(':', $obj->ip);
                     $shortIp = implode(':', array_slice($ipSegments, 0, 4));
@@ -165,4 +192,7 @@ $users = $rpc->user()->getAll();
 <?php
 
 require_once "../../inc/footer.php";
+
+
+
 ?>
