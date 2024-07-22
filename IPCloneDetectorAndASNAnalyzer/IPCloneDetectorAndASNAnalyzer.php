@@ -1,6 +1,6 @@
 <?php
 /**
-  @title IP Statistic and ASN
+  @title IP Clones and ASN Analysis
   @author Madrix
   @description Displays some statistics about ASNs, IPs, and clones.
   @contact 
@@ -14,15 +14,15 @@
   @screenshot https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/example_plugin/screenshots/example_plugin.jpg?raw=true
 */
 
-class IP_Statistic_and_ASN
+class IPCloneDetectorAndASNAnalyzer
 {
 	/* You must specify these here for internal use
  	 * All of these are mandatory or your plugin will not work.
  	*/
-	public $name = "IP Statistic and ASN"; // Name of your plugin
+	public $name = "IP Clones and ASN Analysis"; // Name of your plugin
 	public $author = "Madrix"; // Name or handle of your lovely self
-	public $version = "1.0"; // Version of this plugin
-	public $description = ""; // Description of your beautiful plugin
+	public $version = "1.1"; // Version of this plugin
+	public $description = "Displays some statistics about ASNs, IPs, and clones."; // Description of your beautiful plugin
 	public $email = ""; // An email people can contact you with in case of problems
 
 	/** This is run on plugin load. You can add hooks and initialize whatever databases
@@ -40,7 +40,7 @@ class IP_Statistic_and_ASN
 		 * in your hooked function. In this example we are referencing a
 		 * method (function) in this class (example_plugin)
 		*/
-		Hook::func(HOOKTYPE_NAVBAR, 'IP_Statistic_and_ASN::add_navbar'); 
+		Hook::func(HOOKTYPE_NAVBAR, 'IPCloneDetectorAndASNAnalyzer::add_navbar'); 
 	}
 
 	/** This is the method (function) that we have hooked.
@@ -50,8 +50,8 @@ class IP_Statistic_and_ASN
    	*/
 	public static function add_navbar(&$pages)
 	{
-		$page_name = "IP Statistic and ASN";
-		$page_link = "plugins/IP_Statistic_and_ASN/index.php";
+		$page_name = "IP Clones and ASN Analysis";
+		$page_link = "plugins/IPCloneDetectorAndASNAnalyzer/index.php";
 		$pages[$page_name] = ["script" => $page_link, "no_irc_server_required" => true];
 	}
 }

@@ -26,7 +26,7 @@ $result = shell_exec($command);
         background-color: #0056b3;
     }
 </style>
-<button class="back-button" onclick="goBack()">Page précédente</button>
+<button class="back-button" onclick="goBack()">Previous page</button>
 
 <script>
     function goBack() {
