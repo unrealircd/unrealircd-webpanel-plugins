@@ -6,7 +6,8 @@ require_once(UPATH . "/inc/connection.php");
 global $rpc;
 $users = $rpc->user()->getAll();
 
-function readFileContent($filePath) {
+function readFileContent($filePath)
+{
     $content = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     if ($content === false) {
         echo "Impossible d'ouvrir le fichier.";
@@ -17,7 +18,8 @@ function readFileContent($filePath) {
 
 $asnFileContent = readFileContent('badasn/list.txt');
 
-function asnExists($asn, $fileContent) {
+function asnExists($asn, $fileContent)
+{
     foreach ($fileContent as $line) {
         if (trim($line) == $asn) {
             return true;
@@ -30,10 +32,11 @@ function asnExists($asn, $fileContent) {
 
 ?>
 <style>
-table td, table th {
-  padding: 2px;
-  text-align: center
-}
+    table td,
+    table th {
+        padding: 2px;
+        text-align: center
+    }
 </style>
 <div class="container d-flex justify-content-center align-items-center container-center">
     <div class="row">
@@ -71,7 +74,7 @@ table td, table th {
 
             foreach ($asnCounts as $info) {
                 echo "<tr>";
-                echo "<td>" . (empty($info['asn']) ? '-' : '<a href="WhoisASN.php?asn='.$info['asn'].'">'.$info['asn'].'</a>') . "</td>";
+                echo "<td>" . (empty($info['asn']) ? '-' : '<a href="WhoisASN.php?asn=' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
                 echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : $info['asname']) . "</td>";
                 echo "<td>" . (empty($info['country_code']) ? '-' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
                 echo "<td>{$info['count']}</td>";
@@ -113,18 +116,18 @@ table td, table th {
             }
 
             echo "<table border='1'>
-        <tr>
-            <th>IP</th>
-            <th>Number<br>of<br>duplicates</th>
-            <th>List of names</th>
-        </tr>";
+                <tr>
+                    <th>IP</th>
+                    <th>Number<br>of<br>duplicates</th>
+                    <th>List of names</th>
+                </tr>";
 
-            foreach ($duplicateList as $entry) {
-                echo "<tr>
-            <td>{$entry['ip']}</td>
-            <td>{$entry['count']}</td>
-            <td>{$entry['names']}</td>
-          </tr>";
+                    foreach ($duplicateList as $entry) {
+                        echo "<tr>
+                    <td>{$entry['ip']}</td>
+                    <td>{$entry['count']}</td>
+                    <td>{$entry['names']}</td>
+                </tr>";
             }
 
             echo "</table>";
@@ -163,21 +166,76 @@ table td, table th {
             }
 
             echo "<table border='1'>
-<tr>
-    <th>IP</th>
-    <th>Number<br>of<br>duplicates</th>
-    <th>List of names</th>
-</tr>";
+                <tr>
+                    <th>IP</th>
+                    <th>Number<br>of<br>duplicates</th>
+                    <th>List of names</th>
+                </tr>";
 
-            foreach ($duplicateList as $entry) {
-                echo "<tr>
-    <td>{$entry['ip']}</td>
-    <td>{$entry['count']}</td>
-    <td>{$entry['names']}</td>
-  </tr>";
+                            foreach ($duplicateList as $entry) {
+                                echo "<tr>
+                    <td>{$entry['ip']}</td>
+                    <td>{$entry['count']}</td>
+                    <td>{$entry['names']}</td>
+                </tr>";
             }
 
             echo "</table>";
+            ?>
+
+<hr>
+            <h4>Statistics Users</h4>
+            <?php
+                $ipv4Count = 0;
+                $ipv6Count = 0;
+                $usersCount = 0;
+                $accountCount = 0;
+                $noAccountCount = 0;
+
+                foreach ($users as $obj) {
+                    $usersCount++;
+                    if (isset($obj->ip)) {
+                        if (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                            $ipv4Count++;
+                        } elseif (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                            $ipv6Count++;
+                        }
+                    }
+                    if (isset($obj->user)) {
+                        if (isset($obj->user->account)) {
+                            $accountCount++;
+                        } else {
+                            $noAccountCount++;
+                        }
+                    }
+                }
+
+                echo "<table border='1'>
+                        <tr>
+                            <th>Type</th>
+                            <th>Online number</th>
+                        </tr>
+                        <tr>
+                            <td>Number of total users</td>
+                            <td>{$usersCount}</td>
+                        </tr>
+                        <tr>
+                            <td>Number of IPv4</td>
+                            <td>{$ipv4Count}</td>
+                        </tr>
+                        <tr>
+                            <td>Number of IPv6</td>
+                            <td>{$ipv6Count}</td>
+                        </tr>
+                        <tr>
+                            <td>Number of account</td>
+                            <td>{$accountCount}</td>
+                        </tr>
+                        <tr>
+                            <td>Number of no account</td>
+                            <td>{$noAccountCount}</td>
+                        </tr>
+                    </table>";
             ?>
         </div>
     </div>
