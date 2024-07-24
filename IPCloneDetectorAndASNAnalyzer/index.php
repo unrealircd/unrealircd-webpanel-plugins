@@ -2,6 +2,11 @@
 require_once "../../inc/common.php";
 require_once "../../inc/header.php";
 
+/*
+ * View of the Good ASN column
+ */
+$asnIsGood = false;
+
 require_once(UPATH . "/inc/connection.php");
 global $rpc;
 $users = $rpc->user()->getAll();
@@ -10,13 +15,14 @@ function readFileContent($filePath)
 {
     $content = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     if ($content === false) {
-        echo "Impossible d'ouvrir le fichier.";
+        echo "Impossible to open the file.";
         return [];
     }
     return $content;
 }
 
-$asnFileContent = readFileContent('badasn/list.txt');
+if($asnIsGood)
+    $asnFileContent = readFileContent('badasn/list.txt');
 
 function asnExists($asn, $fileContent)
 {
@@ -70,7 +76,7 @@ function asnExists($asn, $fileContent)
 
 
             echo "<table border='1'>";
-            echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th><th>Good ASN</th></tr>";
+            echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th>".($asnIsGood ? "<th>Good ASN</th>" : "")."</tr>";
 
             foreach ($asnCounts as $info) {
                 echo "<tr>";
@@ -78,11 +84,15 @@ function asnExists($asn, $fileContent)
                 echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : $info['asname']) . "</td>";
                 echo "<td>" . (empty($info['country_code']) ? '-' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
                 echo "<td>{$info['count']}</td>";
-                echo "<td>" . (empty($info['asn']) ? '-' : (asnExists($info['asn'], $asnFileContent) ? '⚠️' : '✅')) . "</td>";
+                if($asnIsGood)
+                    echo "<td>" . (empty($info['asn']) ? '-' : (asnExists($info['asn'], $asnFileContent) ? '⚠️' : '✅')) . "</td>";
                 echo "</tr>";
             }
 
             echo "</table>";
+
+            if($asnIsGood)
+                echo "<p class=\"pt-4\">The \"Good ASN\" column is experimental. By default, all ASNs are considered good, but special attention is given to those listed in the file <em>plugins/IPCloneDetectorAndASNAnalyzer/badasn/list.txt</em>.</p>";
             ?>
         </div>
         <div class="col-md-6 div-item">
@@ -236,21 +246,19 @@ function asnExists($asn, $fileContent)
                             <td>{$noAccountCount}</td>
                         </tr>
                     </table>";
-            ?>
+                    ?>
         </div>
     </div>
 </div>
 
+<!--
 <div class="container d-flex justify-content-center align-items-center container-center">
     <div class="row">
 
 
     </div>
 </div>
+-->
 <?php
-
 require_once "../../inc/footer.php";
-
-
-
 ?>

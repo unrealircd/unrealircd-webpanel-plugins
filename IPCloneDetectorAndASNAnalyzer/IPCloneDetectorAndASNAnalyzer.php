@@ -4,14 +4,14 @@
   @author Madrix
   @description Displays some statistics about ASNs, IPs, and clones.
   @contact 
-  @version 1.0
+  @version 1.2
   @tested 0.9
   @minver 0.9
   @maxver *
   @license GPLv3
-  @icon https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/example_plugin/screenshots/example_icon.png?raw=true
-  @screenshot https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/example_plugin/screenshots/example_plugin2.jpg?raw=true
-  @screenshot https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/example_plugin/screenshots/example_plugin.jpg?raw=true
+  @icon https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/IPCloneDetectorAndASNAnalyzer/screenshots/statistics.svg?raw=true
+  @screenshot https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/IPCloneDetectorAndASNAnalyzer/screenshots/screenshot.png?raw=true
+  @screenshot https://github.com/unrealircd/unrealircd-webpanel-plugins/blob/main/IPCloneDetectorAndASNAnalyzer/screenshots/screenshot.png?raw=true
 */
 
 class IPCloneDetectorAndASNAnalyzer
@@ -21,7 +21,7 @@ class IPCloneDetectorAndASNAnalyzer
  	*/
 	public $name = "IP Clones and ASN Analysis"; // Name of your plugin
 	public $author = "Madrix"; // Name or handle of your lovely self
-	public $version = "1.1"; // Version of this plugin
+	public $version = "1.2"; // Version of this plugin
 	public $description = "Displays some statistics about ASNs, IPs, and clones."; // Description of your beautiful plugin
 	public $email = ""; // An email people can contact you with in case of problems
 
