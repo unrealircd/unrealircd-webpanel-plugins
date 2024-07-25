@@ -3,7 +3,7 @@
   @title IP Clones and ASN Analysis
   @author Madrix
   @description Displays some statistics about ASNs, IPs, and clones.
-  @contact 
+  @contact armyndev@outlook.com
   @version 1.2
   @tested 0.9
   @minver 0.9
