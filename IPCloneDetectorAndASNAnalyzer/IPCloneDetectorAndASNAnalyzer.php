@@ -3,7 +3,7 @@
   @title IP Clones and ASN Analysis
   @author Madrix
   @description Displays some statistics about ASNs, IPs, and clones.
-  @contact 
+  @contact armyndev@outlook.com
   @version 1.2
   @tested 0.9
   @minver 0.9
@@ -23,7 +23,7 @@ class IPCloneDetectorAndASNAnalyzer
 	public $author = "Madrix"; // Name or handle of your lovely self
 	public $version = "1.2"; // Version of this plugin
 	public $description = "Displays some statistics about ASNs, IPs, and clones."; // Description of your beautiful plugin
-	public $email = ""; // An email people can contact you with in case of problems
+	public $email = "armyndev@outlook.com"; // An email people can contact you with in case of problems
 
 	/** This is run on plugin load. You can add hooks and initialize whatever databases
  	 * that you think you might need.
