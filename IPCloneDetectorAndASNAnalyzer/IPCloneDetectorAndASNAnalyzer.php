@@ -19,7 +19,7 @@ class IPCloneDetectorAndASNAnalyzer
 	/* You must specify these here for internal use
  	 * All of these are mandatory or your plugin will not work.
  	*/
-	public $name = "IP Clones and ASN Analysis"; // Name of your plugin
+	public $name = "IPCloneDetectorAndASNAnalyzer"; // Name of your plugin
 	public $author = "Madrix"; // Name or handle of your lovely self
 	public $version = "1.2"; // Version of this plugin
 	public $description = "Displays some statistics about ASNs, IPs, and clones."; // Description of your beautiful plugin
