@@ -80,10 +80,10 @@ function asnExists($asn, $fileContent)
 
             foreach ($asnCounts as $info) {
                 echo "<tr>";
-                echo "<td>" . (empty($info['asn']) ? '-' : '<a href="WhoisASN.php?asn=' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
+                echo "<td>" . (empty($info['asn']) ? '-' : '<a class="btn btn-outline-primary" href="WhoisASN.php?asn=' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
                 echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : $info['asname']) . "</td>";
                 echo "<td>" . (empty($info['country_code']) ? '-' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
-                echo "<td>" . (empty($info['asn']) ? $info['count'] : '<a href="users_by_asn.php?asn='.$info['asn'].'">'.$info['count'].'</a>') . "</td>";
+                echo "<td>" . (empty($info['asn']) ? $info['count'] : '<a class="btn btn-outline-primary" href="users_by_asn.php?asn='.$info['asn'].'">'.$info['count'].'</a>') . "</td>";
                 if($asnIsGood)
                     echo "<td>" . (empty($info['asn']) ? '-' : (asnExists($info['asn'], $asnFileContent) ? '⚠️' : '✅')) . "</td>";
                 echo "</tr>";

@@ -43,7 +43,7 @@ $filteredUsers = array_filter($users, function ($entry) use ($asnFilter) {
                     echo "<td>" . (empty($asn) ? '-' : '<a href="WhoisASN.php?asn=' . $asn . '">' . $asn . '</a>') . "</td>";
                     echo "<td>" . (empty($asname) ? 'Localhost ?' : $asname) . "</td>";
                     echo "<td>" . $nickname . "</td>";
-                    echo "<td><a href=\"".get_config("base_url")."users/details.php?nick=" . $nickname . "\">WHOIS</a></td>";
+                    echo "<td><a class=\"btn btn-primary\" href=\"".get_config("base_url")."users/details.php?nick=" . $nickname . "\">WHOIS</a></td>";
                     echo "</tr>";
                 }
 
