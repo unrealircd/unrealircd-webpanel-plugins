@@ -10,6 +10,7 @@ $asnIsGood = false;
 require_once(UPATH . "/inc/connection.php");
 global $rpc;
 $users = $rpc->user()->getAll();
+$server_ban = $rpc->serverban()->getAll();
 
 function readFileContent($filePath)
 {
@@ -93,6 +94,29 @@ function asnExists($asn, $fileContent)
 
             if($asnIsGood)
                 echo "<p class=\"pt-4\">The \"Good ASN\" column is experimental. By default, all ASNs are considered good, but special attention is given to those listed in the file <em>plugins/IPCloneDetectorAndASNAnalyzer/badasn/list.txt</em>.</p>";
+            ?>
+                        
+            <h4 class="mt-4">Bans server corresponding to '~asn:'</h4>
+            <?php
+
+            echo "<table border='1'>
+                    <tr>
+                        <th>Type ban</th>
+                        <th>Found</th>
+                    </tr>
+                ";
+            foreach ($server_ban as $obj) {
+                $usersCount++;
+                if (isset($obj->name)) {
+                    if (strpos($obj->name, "~asn:") !== false) {
+                        echo "<tr>
+                            <td>{$obj->type}</td>
+                            <td>{$obj->name}</td>
+                        </tr>";
+                    }
+                }
+            }
+                echo "</table>";
             ?>
         </div>
         <div class="col-md-6 div-item">
