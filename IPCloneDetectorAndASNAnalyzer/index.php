@@ -10,6 +10,7 @@ $asnIsGood = false;
 require_once(UPATH . "/inc/connection.php");
 global $rpc;
 $users = $rpc->user()->getAll();
+$server_ban = $rpc->serverban()->getAll();
 
 function readFileContent($filePath)
 {
@@ -21,7 +22,7 @@ function readFileContent($filePath)
     return $content;
 }
 
-if($asnIsGood)
+if ($asnIsGood)
     $asnFileContent = readFileContent('badasn/list.txt');
 
 function asnExists($asn, $fileContent)
@@ -76,24 +77,26 @@ function asnExists($asn, $fileContent)
 
 
             echo "<table border='1'>";
-            echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th>".($asnIsGood ? "<th>Good ASN</th>" : "")."</tr>";
+            echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th>" . ($asnIsGood ? "<th>Good ASN</th>" : "") . "</tr>";
 
             foreach ($asnCounts as $info) {
                 echo "<tr>";
-                echo "<td>" . (empty($info['asn']) ? '-' : '<a href="WhoisASN.php?asn=' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
+                echo "<td>" . (empty($info['asn']) ? '-' : '<a class="btn btn-outline-primary" href="WhoisASN.php?asn=' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
                 echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : $info['asname']) . "</td>";
                 echo "<td>" . (empty($info['country_code']) ? '-' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
-                echo "<td>{$info['count']}</td>";
-                if($asnIsGood)
+                echo "<td>" . (empty($info['asn']) ? $info['count'] : '<a class="btn btn-outline-primary" href="users_by_asn.php?asn=' . $info['asn'] . '">' . $info['count'] . '</a>') . "</td>";
+                if ($asnIsGood)
                     echo "<td>" . (empty($info['asn']) ? '-' : (asnExists($info['asn'], $asnFileContent) ? '⚠️' : '✅')) . "</td>";
                 echo "</tr>";
             }
 
             echo "</table>";
 
-            if($asnIsGood)
+            if ($asnIsGood)
                 echo "<p class=\"pt-4\">The \"Good ASN\" column is experimental. By default, all ASNs are considered good, but special attention is given to those listed in the file <em>plugins/IPCloneDetectorAndASNAnalyzer/badasn/list.txt</em>.</p>";
             ?>
+
+
         </div>
         <div class="col-md-6 div-item">
             <h4>Show clones on IP</h4>
@@ -132,8 +135,8 @@ function asnExists($asn, $fileContent)
                     <th>List of names</th>
                 </tr>";
 
-                    foreach ($duplicateList as $entry) {
-                        echo "<tr>
+            foreach ($duplicateList as $entry) {
+                echo "<tr>
                     <td>{$entry['ip']}</td>
                     <td>{$entry['count']}</td>
                     <td>{$entry['names']}</td>
@@ -182,8 +185,8 @@ function asnExists($asn, $fileContent)
                     <th>List of names</th>
                 </tr>";
 
-                            foreach ($duplicateList as $entry) {
-                                echo "<tr>
+            foreach ($duplicateList as $entry) {
+                echo "<tr>
                     <td>{$entry['ip']}</td>
                     <td>{$entry['count']}</td>
                     <td>{$entry['names']}</td>
@@ -193,34 +196,34 @@ function asnExists($asn, $fileContent)
             echo "</table>";
             ?>
 
-<hr>
+            <hr>
             <h4>Statistics Users</h4>
             <?php
-                $ipv4Count = 0;
-                $ipv6Count = 0;
-                $usersCount = 0;
-                $accountCount = 0;
-                $noAccountCount = 0;
+            $ipv4Count = 0;
+            $ipv6Count = 0;
+            $usersCount = 0;
+            $accountCount = 0;
+            $noAccountCount = 0;
 
-                foreach ($users as $obj) {
-                    $usersCount++;
-                    if (isset($obj->ip)) {
-                        if (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                            $ipv4Count++;
-                        } elseif (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                            $ipv6Count++;
-                        }
-                    }
-                    if (isset($obj->user)) {
-                        if (isset($obj->user->account)) {
-                            $accountCount++;
-                        } else {
-                            $noAccountCount++;
-                        }
+            foreach ($users as $obj) {
+                $usersCount++;
+                if (isset($obj->ip)) {
+                    if (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                        $ipv4Count++;
+                    } elseif (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                        $ipv6Count++;
                     }
                 }
+                if (isset($obj->user)) {
+                    if (isset($obj->user->account)) {
+                        $accountCount++;
+                    } else {
+                        $noAccountCount++;
+                    }
+                }
+            }
 
-                echo "<table border='1'>
+            echo "<table border='1'>
                         <tr>
                             <th>Type</th>
                             <th>Online number</th>
@@ -246,7 +249,55 @@ function asnExists($asn, $fileContent)
                             <td>{$noAccountCount}</td>
                         </tr>
                     </table>";
-                    ?>
+            ?>
+
+
+            <h4 class="mt-4">Bans server corresponding to '~asn:'</h4>
+            <?php
+
+            echo "<table border='1'>
+                    <tr>
+                        <th>Type ban</th>
+                        <th>Found</th>
+                    </tr>
+                ";
+            foreach ($server_ban as $obj) {
+                $usersCount++;
+                if (isset($obj->name)) {
+                    if (strpos($obj->name, "~asn:") !== false) {
+                        echo "<tr>
+                            <td>{$obj->type}</td>
+                            <td>{$obj->name}</td>
+                        </tr>";
+                    }
+                }
+            }
+            echo "</table>";
+            ?>
+
+
+            <h4 class="mt-4">Bans server corresponding to other type of '~'</h4>
+            <?php
+
+            echo "<table border='1'>
+                    <tr>
+                        <th>Type ban</th>
+                        <th>Found</th>
+                    </tr>
+                ";
+            foreach ($server_ban as $obj) {
+                $usersCount++;
+                if (isset($obj->name)) {
+                    if (strpos($obj->name, "~asn:") === false && strpos($obj->name, "~") !== false) {
+                        echo "<tr>
+                            <td>{$obj->type}</td>
+                            <td>{$obj->name}</td>
+                        </tr>";
+                    }
+                }
+            }
+            echo "</table>";
+            ?>
         </div>
     </div>
 </div>
