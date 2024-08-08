@@ -44,6 +44,9 @@ function asnExists($asn, $fileContent)
         padding: 2px;
         text-align: center
     }
+    table a.btn {
+	    user-select: unset;
+    }
 </style>
 <div class="container d-flex justify-content-center align-items-center container-center">
     <div class="row">
