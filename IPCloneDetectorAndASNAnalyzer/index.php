@@ -306,6 +306,8 @@ function asnExists($asn, $fileContent)
     }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
 <div class="container d-flex justify-content-center align-items-center container-center">
     <div class="row">
         <div class="col-md-6 div-item">
@@ -472,10 +474,28 @@ function asnExists($asn, $fileContent)
                             title: {
                                 display: true,
                                 text: 'Number of Connected Users by Country'
+                            },
+                            datalabels: {
+                                color: '#343a40',
+                                font: {
+                                    weight: 'bold',
+                                    size: 12
+                                },
+                                formatter: (value, context) => {
+                                    const total = context.chart.data.datasets[0].data.reduce((acc, val) => acc + val, 0);
+                                    const percentage = (value / total) * 100;
+                                    if (percentage < 5) {
+                                        return null;
+                                    }
+                                    return `${context.chart.data.labels[context.dataIndex]}`;
+                                }
                             }
                         }
                     },
                 };
+
+                // Register the plugin
+                Chart.register(ChartDataLabels);
 
                 // Render the chart
                 const myChart = new Chart(
