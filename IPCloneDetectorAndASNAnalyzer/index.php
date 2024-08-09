@@ -79,7 +79,7 @@ function asnExists($asn, $fileContent)
             });
 
 
-            echo "<table border='1'>";
+            echo "<table class='table-striped' border='1'>";
             echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th>" . ($asnIsGood ? "<th>Good ASN</th>" : "") . "</tr>";
 
             foreach ($asnCounts as $info) {
@@ -131,7 +131,7 @@ function asnExists($asn, $fileContent)
                 }
             }
 
-            echo "<table border='1'>
+            echo "<table class='table-striped' border='1'>
                 <tr>
                     <th>IP</th>
                     <th>Number<br>of<br>duplicates</th>
@@ -181,7 +181,7 @@ function asnExists($asn, $fileContent)
                 }
             }
 
-            echo "<table border='1'>
+            echo "<table class='table-striped' border='1'>
                 <tr>
                     <th>IP</th>
                     <th>Number<br>of<br>duplicates</th>
@@ -226,7 +226,7 @@ function asnExists($asn, $fileContent)
                 }
             }
 
-            echo "<table border='1'>
+            echo "<table class='table-striped' border='1'>
                         <tr>
                             <th>Type</th>
                             <th>Online number</th>
@@ -258,7 +258,7 @@ function asnExists($asn, $fileContent)
             <h4 class="mt-4">Bans server corresponding to '~asn:'</h4>
             <?php
 
-            echo "<table border='1'>
+            echo "<table class='table-striped' border='1'>
                     <tr>
                         <th>Type ban</th>
                         <th>Found</th>
@@ -282,7 +282,7 @@ function asnExists($asn, $fileContent)
             <h4 class="mt-4">Bans server corresponding to other type of '~'</h4>
             <?php
 
-            echo "<table border='1'>
+            echo "<table class='table-striped' border='1'>
                     <tr>
                         <th>Type ban</th>
                         <th>Found</th>
