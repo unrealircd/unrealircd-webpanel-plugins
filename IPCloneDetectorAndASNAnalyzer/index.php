@@ -50,135 +50,6 @@ function asnExists($asn, $fileContent)
     }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<div class="container d-flex justify-content-center align-items-center container-center mb-5">
-    <div class="row">
-
-        <canvas id="Chart" width="400" height="400"></canvas>
-
-        <script>
-            <?php
-
-            $countryCounts = [];
-
-
-            foreach ($users as $user) {
-                $countryCode = $user->geoip->country_code;
-
-                if (isset($countryCounts[$countryCode])) {
-                    $countryCounts[$countryCode]++;
-                } else {
-                    $countryCounts[$countryCode] = 1;
-                }
-            }
-
-            // Sort the country counts in descending order
-            arsort($countryCounts);
-
-            $countries = [];
-            $counts = [];
-            //echo "Country Codes and their Counts:\n";
-            foreach ($countryCounts as $countryCode => $count) {
-                //echo "Country Code: $countryCode - Count: $count\n";
-                $countries[] = $countryCode;
-                $counts[] = $count;
-            }
-
-            ?>
-
-            // PHP-generated countries array
-            const countries = <?php echo json_encode($countries); ?>;
-            const internetUsers = <?php echo json_encode($counts); ?>;
-
-            // Predefined set of colors
-            const predefinedColors = [
-                'rgba(255, 99, 132, 0.2)', // Red
-                'rgba(54, 162, 235, 0.2)', // Blue
-                'rgba(255, 206, 86, 0.2)', // Yellow
-                'rgba(75, 192, 192, 0.2)', // Green
-                'rgba(153, 102, 255, 0.2)', // Purple
-                'rgba(255, 159, 64, 0.2)', // Orange
-                'rgba(199, 199, 199, 0.2)', // Grey
-                'rgba(83, 102, 255, 0.2)', // Another Blue
-                'rgba(255, 99, 255, 0.2)', // Pink
-                'rgba(99, 255, 132, 0.2)', // Light Green
-                'rgba(255, 219, 88, 0.2)', // Light Yellow
-                'rgba(255, 99, 64, 0.2)', // Light Red
-                'rgba(75, 255, 192, 0.2)', // Mint Green
-                'rgba(192, 75, 255, 0.2)', // Light Purple
-                'rgba(159, 255, 64, 0.2)', // Light Orange
-                'rgba(132, 99, 255, 0.2)', // Periwinkle
-                'rgba(64, 255, 199, 0.2)', // Turquoise
-                'rgba(255, 64, 159, 0.2)', // Salmon
-                'rgba(255, 192, 75, 0.2)', // Gold
-                'rgba(102, 255, 83, 0.2)' // Lime Green
-            ];
-
-            const predefinedBorderColors = [
-                'rgba(255, 99, 132, 1)', // Red
-                'rgba(54, 162, 235, 1)', // Blue
-                'rgba(255, 206, 86, 1)', // Yellow
-                'rgba(75, 192, 192, 1)', // Green
-                'rgba(153, 102, 255, 1)', // Purple
-                'rgba(255, 159, 64, 1)', // Orange
-                'rgba(199, 199, 199, 1)', // Grey
-                'rgba(83, 102, 255, 1)', // Another Blue
-                'rgba(255, 99, 255, 1)', // Pink
-                'rgba(99, 255, 132, 1)', // Light Green
-                'rgba(255, 219, 88, 1)', // Light Yellow
-                'rgba(255, 99, 64, 1)', // Light Red
-                'rgba(75, 255, 192, 1)', // Mint Green
-                'rgba(192, 75, 255, 1)', // Light Purple
-                'rgba(159, 255, 64, 1)', // Light Orange
-                'rgba(132, 99, 255, 1)', // Periwinkle
-                'rgba(64, 255, 199, 1)', // Turquoise
-                'rgba(255, 64, 159, 1)', // Salmon
-                'rgba(255, 192, 75, 1)', // Gold
-                'rgba(102, 255, 83, 1)' // Lime Green
-            ];
-
-            // Generate colors for each country based on index
-            const backgroundColors = countries.map((_, index) => predefinedColors[index % predefinedColors.length]);
-            const borderColors = countries.map((_, index) => predefinedBorderColors[index % predefinedBorderColors.length]);
-
-            // Configuration of the chart
-            const data = {
-                labels: countries,
-                datasets: [{
-                    label: 'Number of Users',
-                    data: internetUsers,
-                    backgroundColor: backgroundColors,
-                    borderColor: borderColors,
-                    borderWidth: 1
-                }]
-            };
-
-            // Chart options
-            const config = {
-                type: 'pie',
-                data: data,
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        title: {
-                            display: true,
-                            text: 'Number of Connected Users by Country'
-                        }
-                    }
-                },
-            };
-
-            // Render the chart
-            const myChart = new Chart(
-                document.getElementById('Chart'),
-                config
-            );
-        </script>
-
-    </div>
-</div>
 <div class="container d-flex justify-content-center align-items-center container-center">
     <div class="row">
         <div class="col-md-6 div-item">
@@ -233,6 +104,131 @@ function asnExists($asn, $fileContent)
 
         </div>
         <div class="col-md-6 div-item">
+            <canvas id="Chart" width="400" height="400"></canvas>
+
+            <script>
+                <?php
+
+                $countryCounts = [];
+
+
+                foreach ($users as $user) {
+                    $countryCode = $user->geoip->country_code;
+
+                    if (isset($countryCounts[$countryCode])) {
+                        $countryCounts[$countryCode]++;
+                    } else {
+                        $countryCounts[$countryCode] = 1;
+                    }
+                }
+
+                // Sort the country counts in descending order
+                arsort($countryCounts);
+
+                $countries = [];
+                $counts = [];
+                //echo "Country Codes and their Counts:\n";
+                foreach ($countryCounts as $countryCode => $count) {
+                    //echo "Country Code: $countryCode - Count: $count\n";
+                    $countries[] = $countryCode;
+                    $counts[] = $count;
+                }
+
+                ?>
+
+                // PHP-generated countries array
+                const countries = <?php echo json_encode($countries); ?>;
+                const internetUsers = <?php echo json_encode($counts); ?>;
+
+                // Predefined set of colors
+                const predefinedColors = [
+                    'rgba(255, 99, 132, 0.2)', // Red
+                    'rgba(54, 162, 235, 0.2)', // Blue
+                    'rgba(255, 206, 86, 0.2)', // Yellow
+                    'rgba(75, 192, 192, 0.2)', // Green
+                    'rgba(153, 102, 255, 0.2)', // Purple
+                    'rgba(255, 159, 64, 0.2)', // Orange
+                    'rgba(199, 199, 199, 0.2)', // Grey
+                    'rgba(83, 102, 255, 0.2)', // Another Blue
+                    'rgba(255, 99, 255, 0.2)', // Pink
+                    'rgba(99, 255, 132, 0.2)', // Light Green
+                    'rgba(255, 219, 88, 0.2)', // Light Yellow
+                    'rgba(255, 99, 64, 0.2)', // Light Red
+                    'rgba(75, 255, 192, 0.2)', // Mint Green
+                    'rgba(192, 75, 255, 0.2)', // Light Purple
+                    'rgba(159, 255, 64, 0.2)', // Light Orange
+                    'rgba(132, 99, 255, 0.2)', // Periwinkle
+                    'rgba(64, 255, 199, 0.2)', // Turquoise
+                    'rgba(255, 64, 159, 0.2)', // Salmon
+                    'rgba(255, 192, 75, 0.2)', // Gold
+                    'rgba(102, 255, 83, 0.2)' // Lime Green
+                ];
+
+                const predefinedBorderColors = [
+                    'rgba(255, 99, 132, 1)', // Red
+                    'rgba(54, 162, 235, 1)', // Blue
+                    'rgba(255, 206, 86, 1)', // Yellow
+                    'rgba(75, 192, 192, 1)', // Green
+                    'rgba(153, 102, 255, 1)', // Purple
+                    'rgba(255, 159, 64, 1)', // Orange
+                    'rgba(199, 199, 199, 1)', // Grey
+                    'rgba(83, 102, 255, 1)', // Another Blue
+                    'rgba(255, 99, 255, 1)', // Pink
+                    'rgba(99, 255, 132, 1)', // Light Green
+                    'rgba(255, 219, 88, 1)', // Light Yellow
+                    'rgba(255, 99, 64, 1)', // Light Red
+                    'rgba(75, 255, 192, 1)', // Mint Green
+                    'rgba(192, 75, 255, 1)', // Light Purple
+                    'rgba(159, 255, 64, 1)', // Light Orange
+                    'rgba(132, 99, 255, 1)', // Periwinkle
+                    'rgba(64, 255, 199, 1)', // Turquoise
+                    'rgba(255, 64, 159, 1)', // Salmon
+                    'rgba(255, 192, 75, 1)', // Gold
+                    'rgba(102, 255, 83, 1)' // Lime Green
+                ];
+
+                // Generate colors for each country based on index
+                const backgroundColors = countries.map((_, index) => predefinedColors[index % predefinedColors.length]);
+                const borderColors = countries.map((_, index) => predefinedBorderColors[index % predefinedBorderColors.length]);
+
+                // Configuration of the chart
+                const data = {
+                    labels: countries,
+                    datasets: [{
+                        label: 'Number of Users',
+                        data: internetUsers,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1
+                    }]
+                };
+
+                // Chart options
+                const config = {
+                    type: 'pie',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Number of Connected Users by Country'
+                            }
+                        }
+                    },
+                };
+
+                // Render the chart
+                const myChart = new Chart(
+                    document.getElementById('Chart'),
+                    config
+                );
+            </script>
+
+
             <h4>Show clones on IP</h4>
             <?php
             $ipList = [];
