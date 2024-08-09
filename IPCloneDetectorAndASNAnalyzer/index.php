@@ -453,7 +453,7 @@ function asnExists($asn, $fileContent)
                 const data = {
                     labels: countries,
                     datasets: [{
-                        label: 'Number of Users',
+                        label: 'Users',
                         data: internetUsers,
                         backgroundColor: backgroundColors,
                         borderColor: borderColors,
@@ -487,7 +487,7 @@ function asnExists($asn, $fileContent)
                                     if (percentage < 5) {
                                         return null;
                                     }
-                                    return `${context.chart.data.labels[context.dataIndex]}`;
+                                    return `${context.chart.data.labels[context.dataIndex]}\n${value}`;
                                 }
                             }
                         }
