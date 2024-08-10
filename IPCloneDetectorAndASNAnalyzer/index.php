@@ -371,6 +371,9 @@ function asnExists($asn, $fileContent)
 
 
                 foreach ($users as $user) {
+                    if (!isset($user->geoip->country_code))
+                        continue;
+                    
                     $countryCode = $user->geoip->country_code;
 
                     if (isset($countryCounts[$countryCode])) {
