@@ -371,6 +371,9 @@ function asnExists($asn, $fileContent)
 
 
                 foreach ($users as $user) {
+                    if (!isset($user->geoip->country_code))
+                        continue;
+                    
                     $countryCode = $user->geoip->country_code;
 
                     if (isset($countryCounts[$countryCode])) {
@@ -737,6 +740,7 @@ function asnExists($asn, $fileContent)
             <form id="searchForm">
                 <input type="text" id="searchValue" name="searchValue" placeholder="Enter value to search" required>
                 <button class="btn btn-primary" type="submit">Search</button>
+                <label class="d-block" for="modeStrict"><input type="checkbox" id="modeStrict" name="modeStrict" value="1" checked> Strict</label>
             </form>
 
             <div id="results" class="results">
@@ -750,7 +754,6 @@ function asnExists($asn, $fileContent)
                     <li>123.123.123.123</li>
                     <li>...</li>
                 </ul>
-                All fields must be complete, without wildcards or equivalents.
                 </p>
             </div>
 
@@ -760,8 +763,9 @@ function asnExists($asn, $fileContent)
                     event.preventDefault();
 
                     const searchValue = document.getElementById('searchValue').value;
+                    const modeStrict = document.getElementById('modeStrict').checked;
 
-                    fetch(window.location.href + 'search.php?searchValue=' + encodeURIComponent(searchValue))
+                    fetch(window.location.href + 'search.php?modeStrict=' + (modeStrict ? '1': '0') + '&searchValue=' + encodeURIComponent(searchValue))
                         .then(response => response.json())
                         .then(data => {
                             const resultsDiv = document.getElementById('results');
