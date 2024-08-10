@@ -308,6 +308,10 @@ function asnExists($asn, $fileContent)
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
+<div class="bd-example m-0 border-0">
+    <button id="SearchinUsers" type="button" class="btn btn-primary" data-toggle="modal" data-target="#searchModal">Search in Users</button>
+</div>
+
 <div class="container d-flex justify-content-center align-items-center container-center">
     <div class="row">
         <div class="col-md-6 div-item">
@@ -373,7 +377,7 @@ function asnExists($asn, $fileContent)
                 foreach ($users as $user) {
                     if (!isset($user->geoip->country_code))
                         continue;
-                    
+
                     $countryCode = $user->geoip->country_code;
 
                     if (isset($countryCounts[$countryCode])) {
@@ -734,72 +738,93 @@ function asnExists($asn, $fileContent)
             }
             echo "</table>";
             ?>
-
-            <h4 class="mt-4">Search for value in the list of users</h4>
-
-            <form id="searchForm">
-                <input type="text" id="searchValue" name="searchValue" placeholder="Enter value to search" required>
-                <button class="btn btn-primary" type="submit">Search</button>
-                <label class="d-block" for="modeStrict"><input type="checkbox" id="modeStrict" name="modeStrict" value="1" checked> Strict</label>
-            </form>
-
-            <div id="results" class="results">
-                <p>
-                    Will search for all users matching the search criteria.<br>
-                    Examples of search criteria :
-                <ul>
-                    <li>known-users</li>
-                    <li>3215</li>
-                    <li>FR</li>
-                    <li>123.123.123.123</li>
-                    <li>...</li>
-                </ul>
-                </p>
-            </div>
-
-
-            <script>
-                document.getElementById('searchForm').addEventListener('submit', function(event) {
-                    event.preventDefault();
-
-                    const searchValue = document.getElementById('searchValue').value;
-                    const modeStrict = document.getElementById('modeStrict').checked;
-
-                    fetch(window.location.href + 'search.php?modeStrict=' + (modeStrict ? '1': '0') + '&searchValue=' + encodeURIComponent(searchValue))
-                        .then(response => response.json())
-                        .then(data => {
-                            const resultsDiv = document.getElementById('results');
-                            resultsDiv.innerHTML = '';
-
-                            if (data.length > 0) {
-                                const ul = document.createElement('ul');
-
-                                data.forEach(item => {
-                                    const li = document.createElement('li');
-                                    li.innerHTML = '<a class="link-opacity-50-hover" href="<?php echo get_config("base_url"); ?>users/details.php?nick=' + item.name + '" target="_blank">' + item.name + '</a>';
-                                    ul.appendChild(li);
-                                });
-
-                                resultsDiv.appendChild(ul);
-                            } else {
-                                resultsDiv.textContent = "The value was not found.";
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            document.getElementById('results').textContent = "An error occurred.";
-                        });
-                });
-            </script>
         </div>
     </div>
 </div>
 
+<!-- Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchModalLabel">Search in Users</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h4 class="mt-4">Search for value in the list of users</h4>
+                <form id="searchForm">
+                    <input type="text" id="searchValue" name="searchValue" class="form-control mb-2" placeholder="Enter value to search" required>
+                    <button class="btn btn-primary" type="submit">Search</button>
+                    <label class="d-block mt-2" for="modeStrict"><input type="checkbox" id="modeStrict" name="modeStrict" value="1" checked> Strict search</label>
+                </form>
+                <div id="results" class="results mt-4">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('searchForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const searchValue = document.getElementById('searchValue').value;
+        const modeStrict = document.getElementById('modeStrict').checked;
+        const results = document.getElementById('results');
+        results.innerHTML = '';
+
+        fetch(window.location.href + 'search.php?modeStrict=' + (modeStrict ? '1' : '0') + '&searchValue=' + encodeURIComponent(searchValue))
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = data.length + ' results';
+
+                if (data.length > 0) {
+                    const ul = document.createElement('ul');
+
+                    data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.innerHTML = '<a class="link-opacity-50-hover" href="<?php echo get_config("base_url"); ?>users/details.php?nick=' + item.name + '" target="_blank">' + item.name + '</a>';
+                        ul.appendChild(li);
+                    });
+
+                    resultsDiv.appendChild(ul);
+                } else {
+                    resultsDiv.textContent = "The value was not found.";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('results').textContent = "An error occurred.";
+            });
+    });
+
+
+    document.getElementById('SearchinUsers').addEventListener('click', function() {
+        document.getElementById('searchForm').reset();
+        document.getElementById('results').innerHTML = `
+            <p>
+                Will search for all users matching the search criteria.<br>
+                Examples of search criteria :
+            </p>
+            <ul>
+                <li>known-users</li>
+                <li>3215</li>
+                <li>FR</li>
+                <li>123.123.123.123</li>
+                <li>...</li>
+            </ul>
+        `;
+    });
+</script>
 <!--
 <div class="container d-flex justify-content-center align-items-center container-center">
     <div class="row">
-
-
     </div>
 </div>
 -->

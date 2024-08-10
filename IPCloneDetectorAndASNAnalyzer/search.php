@@ -11,6 +11,10 @@ $searchValue = isset($_GET['searchValue']) ? $_GET['searchValue'] : '';
 $foundObjects = [];
 $modeStrict = isset($_GET['modeStrict']) && $_GET['modeStrict'] == '1' ? true : false;
 
+usort($users, function($a, $b) {
+    return strcmp($a->name, $b->name);
+});
+
 function searchInArray($array, $searchValue, &$foundObjects, $currentObject) {
     global $modeStrict;
     foreach ($array as $key => $value) {
