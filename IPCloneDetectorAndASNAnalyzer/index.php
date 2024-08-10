@@ -487,8 +487,9 @@ function asnExists($asn, $fileContent)
                                     if (percentage < 5) {
                                         return null;
                                     }
-                                    return `${context.chart.data.labels[context.dataIndex]}\n${value}`;
-                                }
+                                    return `${context.chart.data.labels[context.dataIndex]}\n${percentage.toFixed(1)}%`;
+                                },
+                                textAlign: 'center'
                             }
                         }
                     },
