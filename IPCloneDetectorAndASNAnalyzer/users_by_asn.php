@@ -6,6 +6,10 @@ require_once(UPATH . "/inc/connection.php");
 global $rpc;
 $users = $rpc->user()->getAll();
 
+usort($users, function($a, $b) {
+    return strcmp($a->name, $b->name);
+});
+
 $asnFilter = htmlentities($_GET['asn']);
 
 // Filtrer les utilisateurs en fonction du numéro ASN
