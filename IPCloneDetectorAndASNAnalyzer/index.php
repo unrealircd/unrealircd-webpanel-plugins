@@ -730,6 +730,62 @@ function asnExists($asn, $fileContent)
             }
             echo "</table>";
             ?>
+
+            <h4 class="mt-4">Search for value in the list of users</h4>
+
+            <form id="searchForm">
+                <input type="text" id="searchValue" name="searchValue" placeholder="Enter value to search" required>
+                <button class="btn btn-primary" type="submit">Search</button>
+            </form>
+
+            <div id="results" class="results">
+                <p>
+                    Will search for all users matching the search criteria.<br>
+                    Examples of search criteria :
+                <ul>
+                    <li>known-users</li>
+                    <li>3215</li>
+                    <li>FR</li>
+                    <li>123.123.123.123</li>
+                    <li>...</li>
+                </ul>
+                All fields must be complete, without wildcards or equivalents.
+                </p>
+            </div>
+
+
+            <script>
+                document.getElementById('searchForm').addEventListener('submit', function(event) {
+                    event.preventDefault();
+
+                    const searchValue = document.getElementById('searchValue').value;
+
+                    fetch(window.location.href + 'search.php?searchValue=' + encodeURIComponent(searchValue))
+                        .then(response => response.json())
+                        .then(data => {
+                            const resultsDiv = document.getElementById('results');
+                            resultsDiv.innerHTML = '';
+
+                            if (data.length > 0) {
+                                const ul = document.createElement('ul');
+
+                                data.forEach(item => {
+                                    const li = document.createElement('li');
+                                    li.innerHTML = '<a class="link-opacity-50-hover" href="<?php echo get_config("base_url"); ?>users/details.php?nick=' + item.name + '" target="_blank">' + item.name + '</a>';
+                                    ul.appendChild(li);
+                                });
+
+                                resultsDiv.appendChild(ul);
+                            } else {
+                                resultsDiv.textContent = "The value was not found.";
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            document.getElementById('results').textContent = "An error occurred.";
+                        });
+                });
+            </script>
         </div>
     </div>
 </div>
