@@ -320,21 +320,19 @@ function asnExists($asn, $fileContent)
             $asnCounts = [];
             foreach ($users as $entry) {
                 $geoip = $entry->geoip;
-                if (isset($geoip->asn, $geoip->asname)) {
-                    $asn = $geoip->asn;
-                    $asname = $geoip->asname;
-                    $country_code = $geoip->country_code;
-            
-                    if (!isset($asnCounts[$asn])) {
-                        $asnCounts[$asn] = [
-                            'asn' => $asn,
-                            'asname' => $asname,
-                            'country_code' => $country_code,
-                            'count' => 0
-                        ];
-                    }
-                    $asnCounts[$asn]['count']++;
+                $asn = $geoip->asn ?? "";
+                $asname = $geoip->asname ?? "localhost ?";
+                $country_code = $geoip->country_code ?? "";
+        
+                if (!isset($asnCounts[$asn])) {
+                    $asnCounts[$asn] = [
+                        'asn' => $asn,
+                        'asname' => $asname,
+                        'country_code' => $country_code,
+                        'count' => 0
+                    ];
                 }
+                $asnCounts[$asn]['count']++;
             }            
 
             // Convertir en tableau indexé
