@@ -514,26 +514,30 @@ function asnExists($asn, $fileContent)
                 );
             </script>
             <?php
-
+            $totalUsers = array_sum($countryCounts);
             echo "<table class='country table-striped m-auto mb-5' border='1'>
             <tr>
                 <th>Country</th>
                 <th>Online number</th>
+                <th>Percentage</th>
             </tr>";
 
             foreach ($countryCounts as $countryCode => $count) {
+                $percentage = $totalUsers > 0 ? ($count / $totalUsers) * 100 : 0;
                 //echo "Country Code: $countryCode - Count: $count\n";
                 $countries[] = $countryCode;
                 $counts[] = $count;
                 echo "<tr>
                 <td>" . (empty($countryCode) ? '' : "<img src=\"https://flagcdn.com/48x36/" . strtolower($countryCode) . ".png\" width=\"20\" height=\"15\">") . " " . (!empty($countryCode) ? getCountryName($countryCode) : 'localhost') . "</td>
                 <td>{$count}</td>
+                <td>" . number_format($percentage, 2) . "%</td>
             </tr>";
             }
 
             echo "<tr class='font-weight-bold'>
             <td>Total</td>
             <td>" . count($users) . "</td>
+            <td></td>
         </tr>";
 
             echo "</table>";
