@@ -319,22 +319,23 @@ function asnExists($asn, $fileContent)
             <?php
             $asnCounts = [];
             foreach ($users as $entry) {
-                if (!isset($entry->geoip->asn) || !isset($entry->geoip->asname))
-                    continue;
-                $asn = $entry->geoip->asn;
-                $asname = $entry->geoip->asname;
-                $country_code = $entry->geoip->country_code;
-
-                if (!isset($asnCounts[$asn])) {
-                    $asnCounts[$asn] = [
-                        'asn' => $asn,
-                        'asname' => $asname,
-                        'country_code' => $country_code,
-                        'count' => 0
-                    ];
+                $geoip = $entry->geoip;
+                if (isset($geoip->asn, $geoip->asname)) {
+                    $asn = $geoip->asn;
+                    $asname = $geoip->asname;
+                    $country_code = $geoip->country_code;
+            
+                    if (!isset($asnCounts[$asn])) {
+                        $asnCounts[$asn] = [
+                            'asn' => $asn,
+                            'asname' => $asname,
+                            'country_code' => $country_code,
+                            'count' => 0
+                        ];
+                    }
+                    $asnCounts[$asn]['count']++;
                 }
-                $asnCounts[$asn]['count']++;
-            }
+            }            
 
             // Convertir en tableau indexé
             $asnCounts = array_values($asnCounts);
