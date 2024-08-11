@@ -319,6 +319,9 @@ function asnExists($asn, $fileContent)
             <?php
             $asnCounts = [];
             foreach ($users as $entry) {
+                if (!isset($entry->geoip->asn) || !isset($entry->geoip->asname) || !isset($entry->geoip->country_code))
+                continue;
+
                 $asn = $entry->geoip->asn;
                 $asname = $entry->geoip->asname;
                 $country_code = $entry->geoip->country_code;
