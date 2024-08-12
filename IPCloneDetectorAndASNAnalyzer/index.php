@@ -323,7 +323,7 @@ function asnExists($asn, $fileContent)
                 $asn = $geoip->asn ?? "";
                 $asname = $geoip->asname ?? "localhost ?";
                 $country_code = $geoip->country_code ?? "";
-        
+
                 if (!isset($asnCounts[$asn])) {
                     $asnCounts[$asn] = [
                         'asn' => $asn,
@@ -333,7 +333,7 @@ function asnExists($asn, $fileContent)
                     ];
                 }
                 $asnCounts[$asn]['count']++;
-            }            
+            }
 
             // Convertir en tableau indexé
             $asnCounts = array_values($asnCounts);
@@ -352,7 +352,7 @@ function asnExists($asn, $fileContent)
                 echo "<td>" . (empty($info['asn']) ? '-' : '<a class="btn btn-outline-primary" href="WhoisASN.php?asn=' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
                 echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : $info['asname']) . "</td>";
                 echo "<td>" . (empty($info['country_code']) ? '-' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
-                echo "<td>" . (empty($info['asn']) ? $info['count'] : '<a class="btn btn-outline-primary" href="users_by_asn.php?asn=' . $info['asn'] . '">' . $info['count'] . '</a>') . "</td>";
+                echo "<td>" . (empty($info['asn']) ? $info['count'] : '<button type="button" class="btn btn-outline-primary" onclick="showCustomModal(this)" data-asn="' . $info['asn'] . '">' . $info['count'] . '</button>') . "</td>";
                 if ($asnIsGood)
                     echo "<td>" . (empty($info['asn']) ? '-' : (asnExists($info['asn'], $asnFileContent) ? '⚠️' : '✅')) . "</td>";
                 echo "</tr>";
@@ -774,6 +774,22 @@ function asnExists($asn, $fileContent)
     </div>
 </div>
 
+<div class="modal fade" id="customModal" tabindex="-1" aria-labelledby="customModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="max-width: 600px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customModalLabel">Modal title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="custom_results">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.getElementById('searchForm').addEventListener('submit', function(event) {
         event.preventDefault();
@@ -826,7 +842,54 @@ function asnExists($asn, $fileContent)
             </ul>
         `;
     });
+
+
+    function showCustomModal(button) {
+        var dataAsn = button.getAttribute('data-asn');
+        var modalTitle = document.getElementById('customModalLabel');
+        var modalBody = document.querySelector('#customModal .modal-body');
+        var resultsDiv = document.getElementById('custom_results');
+
+        resultsDiv.innerHTML = '';
+
+        modalTitle.textContent = 'List of users with AS' + dataAsn;
+
+        fetch(window.location.href + 'users_by_asn.php?asn=' + dataAsn)
+            .then(response => response.json())
+            .then(data => {
+
+                let html = `<table class='table table-bordered'>`;
+                html += `<thead><tr><th>Country</th><th>ASN</th><th>Asname</th><th>Nickname</th><th>Whois</th></tr></thead>`;
+                html += `<tbody>`;
+
+                for (let i = 0; i < data.length; i++) {
+                    const item = data[i];
+                    html += `<tr>`;
+                    html += `<td>${item.geoip.country_code + ' <img src="https://flagcdn.com/48x36/' + item.geoip.country_code.toLowerCase() + '.png" width="20" height="15">' || 'N/A'}</td>`;
+                    html += `<td>${item.geoip.asn || 'N/A'}</td>`;
+                    html += `<td>${item.geoip.asname || 'N/A'}</td>`;
+                    html += `<td><strong>${item.name || 'N/A'}</strong></td>`;
+                    html += `<td><a class="btn btn-primary" href="<?= get_config("base_url") ?>users/details.php?nick=${item.name || ''}">WHOIS</a></td>`;
+                }
+
+                if (Object.keys(data).length === 0) {
+                    html += `<tr><td colspan="6">The value was not found.</td></tr>`;
+                }
+
+                html += `</tbody></table>`;
+
+                resultsDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.textContent = "An error occurred.";
+            });
+
+        var myModal = new bootstrap.Modal(document.getElementById('customModal'));
+        myModal.show();
+    }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!--
 <div class="container d-flex justify-content-center align-items-center container-center">
     <div class="row">
