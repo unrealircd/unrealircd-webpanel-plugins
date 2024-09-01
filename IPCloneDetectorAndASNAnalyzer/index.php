@@ -391,7 +391,7 @@ function ipFromAsn($v, $asn)
             foreach ($asnCounts as $info) {
                 echo "<tr>";
                 echo "<td>" . (empty($info['asn']) ? '-' : '<a class="btn btn-outline-primary" href="' . get_config("base_url") . 'tools/ip-whois.php?ip=AS' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
-                echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : $info['asname']) . "</td>";
+                echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : '<a href="https://www.peeringdb.com/asn/' . $info['asn'] . '" target="_blank">' . $info['asname']) . '</a>' . "</td>";
                 echo "<td>" . (empty($info['country_code']) ? '-' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
                 echo "<td>" . (empty($info['asn']) ? $info['count'] : '<button type="button" class="btn btn-outline-primary" onclick="showCustomModal(this)" data-asn="' . $info['asn'] . '">' . $info['count'] . '</button>') . "</td>";
                 echo "<td>" . (empty($info['asn']) ? '-' : ipFromAsn(4, $info['asn'])) . "</td>";
