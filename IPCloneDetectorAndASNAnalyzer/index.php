@@ -287,6 +287,47 @@ function asnExists($asn, $fileContent)
     return false;
 }
 
+function ipFromAsn($v, $asn)
+{
+    global $users;
+    $count = 0;
+    $ipv4Count = 0;
+    $ipv6Count = 0;
+    $totalIpCount = 0;
+
+    foreach ($users as $obj) {
+        if (isset($obj->geoip->asn) && $obj->geoip->asn == $asn && isset($obj->ip)) {
+            $totalIpCount++;
+            if (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                $ipv4Count++;
+            } elseif (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                $ipv6Count++;
+            }
+        }
+    }
+
+    $ipv4Percentage = ($totalIpCount > 0) ? ($ipv4Count / $totalIpCount) * 100 : 0;
+    $ipv6Percentage = ($totalIpCount > 0) ? ($ipv6Count / $totalIpCount) * 100 : 0;
+
+    $css = '';
+    if ($ipv4Percentage > $ipv6Percentage) {
+        $css = ($v == 4) ? ' bg-success' : ' bg-danger';
+    } elseif ($ipv6Percentage > $ipv4Percentage) {
+        $css = ($v == 6) ? ' bg-success' : ' bg-danger';
+    }
+
+    if ($v == 4) {
+        $count = $ipv4Count;
+        $percentage = $ipv4Percentage;
+    } else if ($v == 6) {
+        $count = $ipv6Count;
+        $percentage = $ipv6Percentage;
+    }
+
+    return "$count<span class=\"d-block badge badge-secondary$css\">" . round($percentage, 2) . "%</span>";
+}
+
+
 //print_r($users);
 
 ?>
@@ -345,14 +386,16 @@ function asnExists($asn, $fileContent)
 
 
             echo "<table class='table-striped' border='1'>";
-            echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th>" . ($asnIsGood ? "<th>Good ASN</th>" : "") . "</tr>";
+            echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th><th>IPv4</th><th>IPv6</th>" . ($asnIsGood ? "<th>Good ASN</th>" : "") . "</tr>";
 
             foreach ($asnCounts as $info) {
                 echo "<tr>";
-                echo "<td>" . (empty($info['asn']) ? '-' : '<a class="btn btn-outline-primary" href="'.get_config("base_url").'tools/ip-whois.php?ip=AS' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
+                echo "<td>" . (empty($info['asn']) ? '-' : '<a class="btn btn-outline-primary" href="' . get_config("base_url") . 'tools/ip-whois.php?ip=AS' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
                 echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : $info['asname']) . "</td>";
                 echo "<td>" . (empty($info['country_code']) ? '-' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
                 echo "<td>" . (empty($info['asn']) ? $info['count'] : '<button type="button" class="btn btn-outline-primary" onclick="showCustomModal(this)" data-asn="' . $info['asn'] . '">' . $info['count'] . '</button>') . "</td>";
+                echo "<td>" . (empty($info['asn']) ? '-' : ipFromAsn(4, $info['asn'])) . "</td>";
+                echo "<td>" . (empty($info['asn']) ? '-' : ipFromAsn(6, $info['asn'])) . "</td>";
                 if ($asnIsGood)
                     echo "<td>" . (empty($info['asn']) ? '-' : (asnExists($info['asn'], $asnFileContent) ? '⚠️' : '✅')) . "</td>";
                 echo "</tr>";
