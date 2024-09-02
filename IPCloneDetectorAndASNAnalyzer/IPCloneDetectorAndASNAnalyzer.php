@@ -4,7 +4,7 @@
   @author Madrix
   @description Displays some statistics about ASNs, IPs, and clones.
   @contact armyndev@outlook.com
-  @version 1.8
+  @version 1.9
   @tested 0.9
   @minver 0.9
   @maxver *
@@ -21,7 +21,7 @@ class IPCloneDetectorAndASNAnalyzer
  	*/
 	public $name = "IPCloneDetectorAndASNAnalyzer"; // Name of your plugin
 	public $author = "Madrix"; // Name or handle of your lovely self
-	public $version = "1.8"; // Version of this plugin
+	public $version = "1.9"; // Version of this plugin
 	public $description = "Displays some statistics about ASNs, IPs, and clones."; // Description of your beautiful plugin
 	public $email = "armyndev@outlook.com"; // An email people can contact you with in case of problems
 
