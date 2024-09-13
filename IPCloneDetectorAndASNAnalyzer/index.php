@@ -360,7 +360,7 @@ function ipFromAsn($v, $asn)
             <?php
             $asnCounts = [];
             foreach ($users as $entry) {
-                $geoip = $entry->geoip;
+                $geoip = $entry->geoip ?? "";
                 $asn = $geoip->asn ?? "";
                 $asname = $geoip->asname ?? "localhost ?";
                 $country_code = $geoip->country_code ?? "";
