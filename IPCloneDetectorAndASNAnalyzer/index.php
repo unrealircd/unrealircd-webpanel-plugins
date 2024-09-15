@@ -330,6 +330,17 @@ function ipFromAsn($v, $asn)
 
 //print_r($users);
 
+// Attempt to display an alert if no GeoIP item is found
+foreach ($users as $entry) {
+    if(!isset($entry->geoip)) {
+        echo '
+        <div class="alert alert-danger" role="alert">
+        GeoIP does not seem to be configured in the UnrealIRCd configuration. Update modules.conf, and you can refer to an example in <a href="https://github.com/unrealircd/unrealircd/blob/unreal60_dev/doc/conf/modules.default.conf" target="_blank">modules.default.conf</a>.
+        </div>';
+    }
+    break;
+}
+
 ?>
 <style>
     table td,
@@ -344,6 +355,13 @@ function ipFromAsn($v, $asn)
 
     table.country td {
         padding: 5px;
+    }
+
+    @media screen and (max-width: 1100px) {
+        #main_contain .col-md-6 {
+            max-width: inherit;
+            margin: 0 auto;
+        }
     }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -569,9 +587,10 @@ function ipFromAsn($v, $asn)
                 //echo "Country Code: $countryCode - Count: $count\n";
                 $countries[] = $countryCode;
                 $counts[] = $count;
+                $country = getCountryName($countryCode);
                 echo "<tr>
                 <td>" . (empty($countryCode) ? '' : "<img src=\"https://flagcdn.com/48x36/" . strtolower($countryCode) . ".png\" width=\"20\" height=\"15\">") . " " . (!empty($countryCode) ? getCountryName($countryCode) : 'localhost') . "</td>
-                <td>{$count}</td>
+                <td><button type=\"button\" class=\"btn btn-outline-primary\" onclick=\"showListUsersModal(this)\" data-country=\"{$country}\" data-country_code=\"{$countryCode}\">" . $count . "</button></td>
                 <td>" . number_format($percentage, 2) . "%</td>
             </tr>";
             }
@@ -902,17 +921,16 @@ function ipFromAsn($v, $asn)
             .then(data => {
 
                 let html = `<table class='table table-bordered'>`;
-                html += `<thead><tr><th>Country</th><th>ASN</th><th>Asname</th><th>Nickname</th><th>Whois</th></tr></thead>`;
+                html += `<thead><tr><th>Nickname</th><th>Country</th><th>ASN</th><th>Asname</th></tr></thead>`;
                 html += `<tbody>`;
 
                 for (let i = 0; i < data.length; i++) {
                     const item = data[i];
                     html += `<tr>`;
+                    html += `<td><a href="<?= get_config("base_url") ?>users/details.php?nick=${item.name || ''}"><strong>${item.name || 'N/A'}</strong></a></td>`;
                     html += `<td>${item.geoip.country_code + ' <img src="https://flagcdn.com/48x36/' + item.geoip.country_code.toLowerCase() + '.png" width="20" height="15">' || 'N/A'}</td>`;
                     html += `<td>${item.geoip.asn || 'N/A'}</td>`;
                     html += `<td>${item.geoip.asname || 'N/A'}</td>`;
-                    html += `<td><strong>${item.name || 'N/A'}</strong></td>`;
-                    html += `<td><a class="btn btn-primary" href="<?= get_config("base_url") ?>users/details.php?nick=${item.name || ''}">WHOIS</a></td>`;
                 }
 
                 if (Object.keys(data).length === 0) {
@@ -920,6 +938,58 @@ function ipFromAsn($v, $asn)
                 }
 
                 html += `</tbody></table>`;
+
+                resultsDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.textContent = "An error occurred.";
+            });
+
+        var myModal = new bootstrap.Modal(document.getElementById('customModal'));
+        myModal.show();
+    }
+
+    function showListUsersModal(button) {
+        var dataCountry_code = button.getAttribute('data-country_code');
+        var dataCountry = button.getAttribute('data-country');
+        var modalTitle = document.getElementById('customModalLabel');
+        var modalBody = document.querySelector('#customModal .modal-body');
+        var resultsDiv = document.getElementById('custom_results');
+
+        resultsDiv.innerHTML = '';
+
+        modalTitle.innerHTML = '<p>List of users of country ' + dataCountry + ' (' + dataCountry_code + ')</p>';
+
+        fetch(window.location.href + 'users_by_country.php?country=' + dataCountry_code)
+            .then(response => response.json())
+            .then(data => {
+
+                let numberAccount = 0;
+                let numberNoAccount = 0;
+                let html = `<table class='table table-bordered'>`;
+                html += `<thead><tr><th>Nickname</th><th>Country</th><th>Account</th></tr></thead>`;
+                html += `<tbody>`;
+
+                for (let i = 0; i < data.length; i++) {
+                    const item = data[i];
+                    if (item.user.account)
+                        numberAccount++;
+                    else
+                        numberNoAccount++;
+                    html += `<tr>`;
+                    html += `<td><a href="<?= get_config("base_url") ?>users/details.php?nick=${item.name || ''}"><strong>${item.name || 'N/A'}</a></strong></td>`;
+                    html += `<td>${item.geoip.country_code + ' <img src="https://flagcdn.com/48x36/' + item.geoip.country_code.toLowerCase() + '.png" width="20" height="15">' || 'N/A'}</td>`;
+                    html += `<td>${item.user.account || '<span class="text-danger">N/A</span>'}</td>`;
+                }
+
+                if (Object.keys(data).length === 0) {
+                    html += `<tr><td colspan="6">The value was not found.</td></tr>`;
+                }
+
+                html += `</tbody></table>`;
+
+                modalTitle.innerHTML += `<p style="font-size:13px">Number of accounts: ${numberAccount} | Number of no-accounts: ${numberNoAccount}</p>`;
 
                 resultsDiv.innerHTML = html;
             })
