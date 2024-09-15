@@ -345,6 +345,11 @@ function ipFromAsn($v, $asn)
     table.country td {
         padding: 5px;
     }
+
+    #main_contain .col-md-6 {
+        max-width: inherit;
+        margin: 0 auto;
+    }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
