@@ -357,9 +357,11 @@ foreach ($users as $entry) {
         padding: 5px;
     }
 
-    #main_contain .col-md-6 {
-        max-width: inherit;
-        margin: 0 auto;
+    @media screen and (max-width: 1100px) {
+        #main_contain .col-md-6 {
+            max-width: inherit;
+            margin: 0 auto;
+        }
     }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
