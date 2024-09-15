@@ -330,6 +330,17 @@ function ipFromAsn($v, $asn)
 
 //print_r($users);
 
+// Attempt to display an alert if no GeoIP item is found
+foreach ($users as $entry) {
+    if(!isset($entry->geoip)) {
+        echo '
+        <div class="alert alert-danger" role="alert">
+        GeoIP does not seem to be configured in the UnrealIRCd configuration. Update modules.conf, and you can refer to an example in <a href="https://github.com/unrealircd/unrealircd/blob/unreal60_dev/doc/conf/modules.default.conf" target="_blank">modules.default.conf</a>.
+        </div>';
+    }
+    break;
+}
+
 ?>
 <style>
     table td,
