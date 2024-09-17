@@ -332,7 +332,7 @@ function ipFromAsn($v, $asn)
 
 // Attempt to display an alert if no GeoIP item is found
 foreach ($users as $entry) {
-    if(!isset($entry->geoip)) {
+    if (!isset($entry->geoip)) {
         echo '
         <div class="alert alert-danger" role="alert">
         GeoIP does not seem to be configured in the UnrealIRCd configuration. Update modules.conf, and you can refer to an example in <a href="https://github.com/unrealircd/unrealircd/blob/unreal60_dev/doc/conf/modules.default.conf" target="_blank">modules.default.conf</a>.
@@ -377,6 +377,7 @@ foreach ($users as $entry) {
             <h4>Number of ASN duplicates sorted from largest to smallest</h4>
             <?php
             $asnCounts = [];
+            $asnCount = 0;
             foreach ($users as $entry) {
                 $geoip = $entry->geoip;
                 $asn = $geoip->asn ?? "";
@@ -390,6 +391,7 @@ foreach ($users as $entry) {
                         'country_code' => $country_code,
                         'count' => 0
                     ];
+                    $asnCount++;
                 }
                 $asnCounts[$asn]['count']++;
             }
@@ -420,6 +422,7 @@ foreach ($users as $entry) {
             }
 
             echo "</table>";
+            echo "$asnCount different ASNs found";
 
             if ($asnIsGood)
                 echo "<p class=\"pt-4\">The \"Good ASN\" column is experimental. By default, all ASNs are considered good, but special attention is given to those listed in the file <em>plugins/IPCloneDetectorAndASNAnalyzer/badasn/list.txt</em>.</p>";
@@ -761,11 +764,11 @@ foreach ($users as $entry) {
 
             <h4 class="mt-4">Bans server corresponding to '~asn:'</h4>
             <?php
-
             echo "<table class='table-striped' border='1'>
                     <tr>
                         <th>Type ban</th>
                         <th>Found</th>
+                        <th>duration</th>
                     </tr>
                 ";
             foreach ($server_ban as $obj) {
@@ -775,6 +778,7 @@ foreach ($users as $entry) {
                         echo "<tr>
                             <td>{$obj->type}</td>
                             <td>{$obj->name}</td>
+                            <td>{$obj->duration_string}</td>
                         </tr>";
                     }
                 }
@@ -790,6 +794,7 @@ foreach ($users as $entry) {
                     <tr>
                         <th>Type ban</th>
                         <th>Found</th>
+                        <th>duration</th>
                     </tr>
                 ";
             foreach ($server_ban as $obj) {
@@ -799,6 +804,7 @@ foreach ($users as $entry) {
                         echo "<tr>
                             <td>{$obj->type}</td>
                             <td>{$obj->name}</td>
+                            <td>{$obj->duration_string}</td>
                         </tr>";
                     }
                 }
