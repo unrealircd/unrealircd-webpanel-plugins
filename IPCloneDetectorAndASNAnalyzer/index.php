@@ -768,16 +768,25 @@ foreach ($users as $entry) {
                     <tr>
                         <th>Type ban</th>
                         <th>Found</th>
+                        <th>Affected users</th>
                         <th>duration</th>
                     </tr>
                 ";
             foreach ($server_ban as $obj) {
                 $usersCount++;
                 if (isset($obj->name)) {
-                    if (strpos($obj->name, "~asn:") !== false) {
+                    if (strpos($obj->name, "~asn:") !== false && preg_match('/^\%/', $obj->name, $matches) === 1) {
                         echo "<tr>
                             <td>{$obj->type}</td>
                             <td>{$obj->name}</td>
+                            <td><a href=\"https://www.unrealircd.org/docs/Soft_ban\" target=\"_blank\">unregistered</a></td>
+                            <td>{$obj->duration_string}</td>
+                        </tr>";
+                    } else if (strpos($obj->name, "~asn:") !== false) {
+                        echo "<tr>
+                            <td>{$obj->type}</td>
+                            <td>{$obj->name}</td>
+                            <td>all</td>
                             <td>{$obj->duration_string}</td>
                         </tr>";
                     }
@@ -794,16 +803,25 @@ foreach ($users as $entry) {
                     <tr>
                         <th>Type ban</th>
                         <th>Found</th>
+                        <th>Affected users</th>
                         <th>duration</th>
                     </tr>
                 ";
             foreach ($server_ban as $obj) {
                 $usersCount++;
                 if (isset($obj->name)) {
-                    if (strpos($obj->name, "~asn:") === false && strpos($obj->name, "~") !== false) {
+                    if (strpos($obj->name, "~asn:") === false && strpos($obj->name, "~") !== false && preg_match('/^\%/', $obj->name, $matches) === 1) {
                         echo "<tr>
                             <td>{$obj->type}</td>
                             <td>{$obj->name}</td>
+                             <td><a href=\"https://www.unrealircd.org/docs/Soft_ban\" target=\"_blank\">unregistered</a></td>
+                            <td>{$obj->duration_string}</td>
+                        </tr>";
+                    } else if (strpos($obj->name, "~asn:") === false && strpos($obj->name, "~") !== false) {
+                        echo "<tr>
+                            <td>{$obj->type}</td>
+                            <td>{$obj->name}</td>
+                            <td>all</td>
                             <td>{$obj->duration_string}</td>
                         </tr>";
                     }
