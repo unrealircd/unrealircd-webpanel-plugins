@@ -846,9 +846,24 @@ foreach ($users as $entry) {
             <div class="modal-body">
                 <h4 class="mt-4">Search for value in the list of users</h4>
                 <form id="searchForm">
-                    <input type="text" id="searchValue" name="searchValue" class="form-control mb-2" placeholder="Enter value to search" required>
+
+                    <div class="input-group mb-2">
+                        <input type="text" id="searchValue" name="searchValue" class="form-control" placeholder="Enter value to search" required>
+                        <div class="input-group-append">
+                            <span class="input-group-text">
+                                <input type="checkbox" id="modeStrict" name="modeStrict" value="1" checked>
+                                <label class="d-block ml-1 mb-0" for="modeStrict">Strict search</label>
+                            </span>
+
+                        </div>
+                    </div>
+
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">#</span>
+                        <input type="text" id="searchFromChannel" name="searchFromChannel" class="form-control" placeholder="(Optional) Search in a specific channel - Ex: quiz">
+                    </div>
                     <button class="btn btn-primary" type="submit">Search</button>
-                    <label class="d-block mt-2" for="modeStrict"><input type="checkbox" id="modeStrict" name="modeStrict" value="1" checked> Strict search</label>
+
                 </form>
                 <div id="results" class="results mt-4">
                 </div>
@@ -881,11 +896,12 @@ foreach ($users as $entry) {
         event.preventDefault();
 
         const searchValue = document.getElementById('searchValue').value;
+        const searchFromChannel = document.getElementById('searchFromChannel').value;
         const modeStrict = document.getElementById('modeStrict').checked;
         const results = document.getElementById('results');
         results.innerHTML = '';
 
-        fetch(window.location.href + 'search.php?modeStrict=' + (modeStrict ? '1' : '0') + '&searchValue=' + encodeURIComponent(searchValue))
+        fetch(window.location.href + 'search.php?modeStrict=' + (modeStrict ? '1' : '0') + '&searchValue=' + encodeURIComponent(searchValue) + '&searchFromChannel=' + encodeURIComponent(searchFromChannel))
             .then(response => response.json())
             .then(data => {
                 const resultsDiv = document.getElementById('results');
@@ -926,6 +942,7 @@ foreach ($users as $entry) {
                 <li>123.123.123.123</li>
                 <li>...</li>
             </ul>
+            <p>In the optional channel field, you can enter a channel to search for the value in that channel.</p>
         `;
     });
 
