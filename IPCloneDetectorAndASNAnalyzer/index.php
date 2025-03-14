@@ -363,6 +363,14 @@ foreach ($users as $entry) {
             margin: 0 auto;
         }
     }
+
+    .text_boy {
+        color: #0e77ff;
+    }
+
+    .text_girl {
+        color: #ff0592;
+    }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -912,7 +920,11 @@ foreach ($users as $entry) {
 
                     data.forEach(item => {
                         const li = document.createElement('li');
-                        li.innerHTML = '<a class="link-opacity-50-hover" href="<?php echo get_config("base_url"); ?>users/details.php?nick=' + item.name + '" target="_blank">' + item.name + '</a>';
+
+                        let sex = extractionRealname(item.user.realname);
+                        sex = (sex && sex[1] && /^(H|M|h|m)$/.test(sex[1]) ? 'boy' : (sex && sex[1] && /^(F|f)$/.test(sex[1]) ? 'girl' : 'regular'));
+
+                        li.innerHTML = `<a class="link-opacity-50-hover text_${sex}" href="<?php echo get_config("base_url"); ?>users/details.php?nick=${item.name}" target="_blank">${item.name}</a>`;
                         ul.appendChild(li);
                     });
 
@@ -962,16 +974,21 @@ foreach ($users as $entry) {
             .then(data => {
 
                 let html = `<table class='table table-bordered'>`;
-                html += `<thead><tr><th>Nickname</th><th>Country</th><th>ASN</th><th>Asname</th></tr></thead>`;
+                html += `<thead><tr><th>Nickname</th><th>Country</th><th>ASN</th><th>Asname</th><th>Type IP</th></tr></thead>`;
                 html += `<tbody>`;
 
                 for (let i = 0; i < data.length; i++) {
                     const item = data[i];
+                    const type_ip = /\./.test(item.ip) ? 'IPv4' : 'IPv6';
+                    const name = item.name || 'N/A';
+                    let sex = extractionRealname(item.user.realname);
+                    sex = (sex && sex[1] && /^(H|M|h|m)$/.test(sex[1]) ? 'boy' : (sex && sex[1] && /^(F|f)$/.test(sex[1]) ? 'girl' : 'regular'));
                     html += `<tr>`;
-                    html += `<td><a href="<?= get_config("base_url") ?>users/details.php?nick=${item.name || ''}"><strong>${item.name || 'N/A'}</strong></a></td>`;
+                    html += `<td><a href="<?= get_config("base_url") ?>users/details.php?nick=${item.name || ''}"><strong class="text_${sex}">${name}</strong></a></td>`;
                     html += `<td>${item.geoip.country_code + ' <img src="https://flagcdn.com/48x36/' + item.geoip.country_code.toLowerCase() + '.png" width="20" height="15">' || 'N/A'}</td>`;
                     html += `<td>${item.geoip.asn || 'N/A'}</td>`;
                     html += `<td>${item.geoip.asname || 'N/A'}</td>`;
+                    html += `<td>${(type_ip)}</td>`;
                 }
 
                 if (Object.keys(data).length === 0) {
@@ -1018,8 +1035,12 @@ foreach ($users as $entry) {
                         numberAccount++;
                     else
                         numberNoAccount++;
+
+                    let sex = extractionRealname(item.user.realname);
+                    sex = (sex && sex[1] && /^(H|M|h|m)$/.test(sex[1]) ? 'boy' : (sex && sex[1] && /^(F|f)$/.test(sex[1]) ? 'girl' : 'regular'));
+
                     html += `<tr>`;
-                    html += `<td><a href="<?= get_config("base_url") ?>users/details.php?nick=${item.name || ''}"><strong>${item.name || 'N/A'}</a></strong></td>`;
+                    html += `<td><a href="<?= get_config("base_url") ?>users/details.php?nick=${item.name || ''}"><strong class="text_${sex}">${item.name || 'N/A'}</a></strong></td>`;
                     html += `<td>${item.geoip.country_code + ' <img src="https://flagcdn.com/48x36/' + item.geoip.country_code.toLowerCase() + '.png" width="20" height="15">' || 'N/A'}</td>`;
                     html += `<td>${item.user.account || '<span class="text-danger">N/A</span>'}</td>`;
                 }
@@ -1041,6 +1062,11 @@ foreach ($users as $entry) {
 
         var myModal = new bootstrap.Modal(document.getElementById('customModal'));
         myModal.show();
+    }
+
+    function extractionRealname(realname) {
+        const real_name = realname.split(/[/ ]/);
+        return real_name;
     }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
