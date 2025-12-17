@@ -379,7 +379,7 @@ foreach ($users as $entry) {
     <button id="SearchinUsers" type="button" class="btn btn-primary" data-toggle="modal" data-target="#searchModal">Search in Users</button>
 </div>
 
-<div class="container d-flex justify-content-center align-items-center container-center">
+<div class="container-xxl d-flex justify-content-center align-items-center container-center">
     <div class="row">
         <div class="col-md-6 div-item">
             <h4>Number of ASN duplicates sorted from largest to smallest</h4>
@@ -413,13 +413,13 @@ foreach ($users as $entry) {
             });
 
 
-            echo "<table class='table-striped' border='1'>";
-            echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th><th>IPv4</th><th>IPv6</th>" . ($asnIsGood ? "<th>Good ASN</th>" : "") . "</tr>";
+            echo "<table class='table table-hover table-striped mb-0' border='1'>";
+            echo "<thead class='thead-dark'><tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th><th>IPv4</th><th>IPv6</th>" . ($asnIsGood ? "<th>Good ASN</th>" : "") . "</tr></head><tbody>";
 
             foreach ($asnCounts as $info) {
                 echo "<tr>";
                 echo "<td>" . (empty($info['asn']) ? '-' : '<a class="btn btn-outline-primary" href="' . get_config("base_url") . 'tools/ip-whois.php?ip=AS' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
-                echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : '<a href="https://www.peeringdb.com/asn/' . $info['asn'] . '" target="_blank">' . $info['asname']) . '</a>' . "</td>";
+                echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : '<a href="https://www.peeringdb.com/asn/' . $info['asn'] . '" target="_blank" class="text-decoration-none">' . $info['asname']) . '</a>' . "</td>";
                 echo "<td>" . (empty($info['country_code']) ? '-' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
                 echo "<td>" . (empty($info['asn']) ? $info['count'] : '<button type="button" class="btn btn-outline-primary" onclick="showCustomModal(this)" data-asn="' . $info['asn'] . '">' . $info['count'] . '</button>') . "</td>";
                 echo "<td>" . (empty($info['asn']) ? '-' : ipFromAsn(4, $info['asn'])) . "</td>";
@@ -429,7 +429,7 @@ foreach ($users as $entry) {
                 echo "</tr>";
             }
 
-            echo "</table>";
+            echo "</tbody></table>";
             echo "$asnCount different ASNs found";
 
             if ($asnIsGood)
@@ -438,7 +438,7 @@ foreach ($users as $entry) {
 
 
         </div>
-        <div class="col-md-6 div-item">
+        <div class="col-md-5 div-item">
             <canvas id="Chart" width="400" height="400" class="mb-5"></canvas>
 
             <script>
@@ -586,12 +586,13 @@ foreach ($users as $entry) {
             </script>
             <?php
             $totalUsers = array_sum($countryCounts);
-            echo "<table class='country table-striped m-auto mb-5' border='1'>
+            echo "<table class='country table table-hover table-striped mb-0' border='1'>
+            <thead class='thead-dark'>
             <tr>
                 <th>Country</th>
                 <th>Online number</th>
                 <th>Percentage</th>
-            </tr>";
+            </tr></thead><tbody>";
 
             foreach ($countryCounts as $countryCode => $count) {
                 $percentage = $totalUsers > 0 ? ($count / $totalUsers) * 100 : 0;
@@ -612,7 +613,7 @@ foreach ($users as $entry) {
             <td></td>
         </tr>";
 
-            echo "</table>";
+            echo "</tbody></table>";
 
             ?>
 
@@ -646,12 +647,15 @@ foreach ($users as $entry) {
                 }
             }
 
-            echo "<table class='table-striped' border='1'>
+            echo "<table class='table table-hover table-striped mb-0' border='1'>
+                <thead class='thead-dark'>
                 <tr>
                     <th>IP</th>
                     <th>Number<br>of<br>duplicates</th>
                     <th>List of names</th>
-                </tr>";
+                </tr>
+                </thead>
+                <tbody>";
 
             foreach ($duplicateList as $entry) {
                 echo "<tr>
@@ -661,7 +665,7 @@ foreach ($users as $entry) {
                 </tr>";
             }
 
-            echo "</table>";
+            echo "</tbody></table>";
             ?>
             <hr>
             <h4>Show clones based on the first 4 segments of IPv6 addresses</h4>
@@ -696,12 +700,15 @@ foreach ($users as $entry) {
                 }
             }
 
-            echo "<table class='table-striped' border='1'>
+            echo "<table class='table table-hover table-striped mb-0' border='1'>
+                <thead class='thead-dark'>
                 <tr>
                     <th>IP</th>
                     <th>Number<br>of<br>duplicates</th>
                     <th>List of names</th>
-                </tr>";
+                </tr>
+                </thead>
+                <tbody>";
 
             foreach ($duplicateList as $entry) {
                 echo "<tr>
@@ -711,7 +718,7 @@ foreach ($users as $entry) {
                 </tr>";
             }
 
-            echo "</table>";
+            echo "</tbody></table>";
             ?>
 
             <hr>
@@ -732,6 +739,7 @@ foreach ($users as $entry) {
                         $ipv6Count++;
                     }
                 }
+
                 if (isset($obj->user)) {
                     if (isset($obj->user->account)) {
                         $accountCount++;
@@ -741,101 +749,128 @@ foreach ($users as $entry) {
                 }
             }
 
-            echo "<table class='table-striped' border='1'>
-                        <tr>
-                            <th>Type</th>
-                            <th>Online number</th>
-                        </tr>
-                        <tr>
-                            <td>Number of total users</td>
-                            <td>{$usersCount}</td>
-                        </tr>
-                        <tr>
-                            <td>Number of IPv4</td>
-                            <td>{$ipv4Count}</td>
-                        </tr>
-                        <tr>
-                            <td>Number of IPv6</td>
-                            <td>{$ipv6Count}</td>
-                        </tr>
-                        <tr>
-                            <td>Number of account</td>
-                            <td>{$accountCount}</td>
-                        </tr>
-                        <tr>
-                            <td>Number of no account</td>
-                            <td>{$noAccountCount}</td>
-                        </tr>
-                    </table>";
+            // éviter division par zéro
+            if ($usersCount > 0) {
+                $ipv4CountPercentage = round(($ipv4Count / $usersCount) * 100, 2) . '%';
+                $ipv6CountPercentage = round(($ipv6Count / $usersCount) * 100, 2) . '%';
+                $accountCountPercentage = round(($accountCount / $usersCount) * 100, 2) . '%';
+                $noAccountCountPercentage = round(($noAccountCount / $usersCount) * 100, 2) . '%';
+            } else {
+                $ipv4CountPercentage = $ipv6CountPercentage = $accountCountPercentage = $noAccountCountPercentage = '-';
+            }
+
+            echo "<table class='table table-hover table-striped mb-0' border='1'>
+                <thead class='thead-dark'>
+                <tr>
+                    <th>Type</th>
+                    <th>Online number</th>
+                    <th>Percentage</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Number of total users</td>
+                    <td>{$usersCount}</td>
+                    <td>-</td>
+                </tr>
+                <tr style=\"border-top:solid 3px #000;\">
+                    <td>Number of IPv4</td>
+                    <td>{$ipv4Count}</td>
+                    <td>{$ipv4CountPercentage}</td>
+                </tr>
+                <tr>
+                    <td>Number of IPv6</td>
+                    <td>{$ipv6Count}</td>
+                    <td>{$ipv6CountPercentage}</td>
+                </tr>
+                <tr style=\"border-top:solid 3px #000;\">
+                    <td>Number of account</td>
+                    <td>{$accountCount}</td>
+                    <td>{$accountCountPercentage}</td>
+                </tr>
+                <tr>
+                    <td>Number of no account</td>
+                    <td>{$noAccountCount}</td>
+                    <td>{$noAccountCountPercentage}</td>
+                </tr>
+            </tbody>
+            </table>";
             ?>
+
 
 
             <h4 class="mt-4">Bans server corresponding to '~asn:'</h4>
             <?php
-            echo "<table class='table-striped' border='1'>
+            echo "<table class='table table-hover table-striped mb-0' border='1'>
+                    <thead class='thead-dark'>
                     <tr>
                         <th>Type ban</th>
                         <th>Found</th>
                         <th>Affected users</th>
                         <th>duration</th>
                     </tr>
+                    </thead>
+                    <tbody>
                 ";
             foreach ($server_ban as $obj) {
                 $usersCount++;
                 if (isset($obj->name)) {
                     if (strpos($obj->name, "~asn:") !== false && preg_match('/^\%/', $obj->name, $matches) === 1) {
                         echo "<tr>
-                            <td>{$obj->type}</td>
-                            <td>{$obj->name}</td>
+                            <td><span class='badge badge-danger'>{$obj->type}</span></td>
+                            <td><code>{$obj->name}</code></td>
                             <td><a href=\"https://www.unrealircd.org/docs/Soft_ban\" target=\"_blank\">unregistered</a></td>
                             <td>{$obj->duration_string}</td>
                         </tr>";
                     } else if (strpos($obj->name, "~asn:") !== false) {
                         echo "<tr>
-                            <td>{$obj->type}</td>
-                            <td>{$obj->name}</td>
+                            <td><span class='badge badge-danger'>{$obj->type}</span></td>
+                            <td><code>{$obj->name}</code></td>
                             <td>all</td>
                             <td>{$obj->duration_string}</td>
                         </tr>";
                     }
                 }
             }
-            echo "</table>";
+            echo "</tbody></table>";
             ?>
 
 
             <h4 class="mt-4">Bans server corresponding to other type of '~'</h4>
             <?php
 
-            echo "<table class='table-striped' border='1'>
+            echo "<table class='table table-hover table-striped mb-0' border='1'>
+                    <thead class='thead-dark'>
                     <tr>
                         <th>Type ban</th>
                         <th>Found</th>
                         <th>Affected users</th>
                         <th>duration</th>
                     </tr>
+                    </thead>
+                    <tbody>
                 ";
             foreach ($server_ban as $obj) {
                 $usersCount++;
                 if (isset($obj->name)) {
                     if (strpos($obj->name, "~asn:") === false && strpos($obj->name, "~") !== false && preg_match('/^\%/', $obj->name, $matches) === 1) {
                         echo "<tr>
-                            <td>{$obj->type}</td>
-                            <td>{$obj->name}</td>
+                            <td><span class='badge badge-danger'>{$obj->type}</span></td>
+                            <td><code>{$obj->name}</code></td>
                              <td><a href=\"https://www.unrealircd.org/docs/Soft_ban\" target=\"_blank\">unregistered</a></td>
                             <td>{$obj->duration_string}</td>
                         </tr>";
                     } else if (strpos($obj->name, "~asn:") === false && strpos($obj->name, "~") !== false) {
                         echo "<tr>
-                            <td>{$obj->type}</td>
-                            <td>{$obj->name}</td>
+                            <td><span class='badge badge-danger'>{$obj->type}</span></td>
+                            <td><code>{$obj->name}</code></td>
                             <td>all</td>
                             <td>{$obj->duration_string}</td>
                         </tr>";
                     }
                 }
             }
-            echo "</table>";
+            echo "</tbody></table>";
             ?>
         </div>
     </div>
