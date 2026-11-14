@@ -258,11 +258,27 @@ function getCountryName($code)
     return isset($countries[$code]) ? $countries[$code] : 'Unknown country code';
 }
 
-
 require_once(UPATH . "/inc/connection.php");
 global $rpc;
 $users = $rpc->user()->getAll();
 $server_ban = $rpc->serverban()->getAll();
+
+/* ------------------------------------------------------------------ *
+ * Helpers
+ * ------------------------------------------------------------------ */
+function irc_e($v)
+{
+    return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+}
+
+function irc_flag($code)
+{
+    if (empty($code)) {
+        return '-';
+    }
+    $c = irc_e($code);
+    return '<span class="irc-cc">' . $c . '</span> <img class="irc-flag" loading="lazy" src="https://flagcdn.com/48x36/' . strtolower($c) . '.png" width="20" height="15" alt="' . $c . '">';
+}
 
 function readFileContent($filePath)
 {
@@ -287,46 +303,159 @@ function asnExists($asn, $fileContent)
     return false;
 }
 
-function ipFromAsn($v, $asn)
-{
-    global $users;
-    $count = 0;
-    $ipv4Count = 0;
-    $ipv6Count = 0;
-    $totalIpCount = 0;
-
-    foreach ($users as $obj) {
-        if (isset($obj->geoip->asn) && $obj->geoip->asn == $asn && isset($obj->ip)) {
-            $totalIpCount++;
-            if (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                $ipv4Count++;
-            } elseif (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                $ipv6Count++;
-            }
+/* IPv4 / IPv6 statistics per ASN (computed once, in a single pass) */
+$asnIpStats = [];
+foreach ($users as $obj) {
+    if (isset($obj->geoip->asn) && isset($obj->ip)) {
+        $key = (string)$obj->geoip->asn;
+        if (!isset($asnIpStats[$key])) {
+            $asnIpStats[$key] = ['v4' => 0, 'v6' => 0, 'total' => 0];
+        }
+        $asnIpStats[$key]['total']++;
+        if (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $asnIpStats[$key]['v4']++;
+        } elseif (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $asnIpStats[$key]['v6']++;
         }
     }
+}
 
-    $ipv4Percentage = ($totalIpCount > 0) ? ($ipv4Count / $totalIpCount) * 100 : 0;
-    $ipv6Percentage = ($totalIpCount > 0) ? ($ipv6Count / $totalIpCount) * 100 : 0;
+function ipFromAsn($v, $asn)
+{
+    global $asnIpStats;
+    $s = $asnIpStats[(string)$asn] ?? ['v4' => 0, 'v6' => 0, 'total' => 0];
 
-    $css = '';
+    $ipv4Percentage = ($s['total'] > 0) ? ($s['v4'] / $s['total']) * 100 : 0;
+    $ipv6Percentage = ($s['total'] > 0) ? ($s['v6'] / $s['total']) * 100 : 0;
+
+    $css = ' irc-pill-neutral';
     if ($ipv4Percentage > $ipv6Percentage) {
-        $css = ($v == 4) ? ' bg-success' : ' bg-danger';
+        $css = ($v == 4) ? ' irc-pill-ok' : ' irc-pill-bad';
     } elseif ($ipv6Percentage > $ipv4Percentage) {
-        $css = ($v == 6) ? ' bg-success' : ' bg-danger';
+        $css = ($v == 6) ? ' irc-pill-ok' : ' irc-pill-bad';
     }
 
     if ($v == 4) {
-        $count = $ipv4Count;
+        $count = $s['v4'];
         $percentage = $ipv4Percentage;
-    } else if ($v == 6) {
-        $count = $ipv6Count;
+    } else {
+        $count = $s['v6'];
         $percentage = $ipv6Percentage;
     }
 
-    return "$count<span class=\"d-block badge badge-secondary$css\">" . round($percentage, 2) . "%</span>";
+    return "<span class=\"irc-num\">$count</span><span class=\"irc-pill$css\">" . round($percentage, 2) . "%</span>";
 }
 
+/* Clones : same IP, or same first 4 segments of an IPv6 */
+function irc_find_clones($users, $ipv6Prefix = false)
+{
+    $list = [];
+    foreach ($users as $obj) {
+        if (!isset($obj->ip)) {
+            continue;
+        }
+        $ip = $obj->ip;
+        if ($ipv6Prefix) {
+            if (strpos($ip, ':') === false) {
+                continue;
+            }
+            $ip = implode(':', array_slice(explode(':', $ip), 0, 4));
+        }
+        if (!isset($list[$ip])) {
+            $list[$ip] = ['count' => 0, 'names' => []];
+        }
+        $list[$ip]['count']++;
+        $list[$ip]['names'][] = $obj->name ?? '';
+    }
+
+    $duplicates = [];
+    foreach ($list as $ip => $info) {
+        if ($info['count'] > 1) {
+            $duplicates[] = ['ip' => (string)$ip, 'count' => $info['count'], 'names' => $info['names']];
+        }
+    }
+    usort($duplicates, function ($a, $b) {
+        return $b['count'] - $a['count'];
+    });
+    return $duplicates;
+}
+
+function irc_render_clones($duplicates)
+{
+    echo "<div class='irc-scroll irc-scroll-short'><table class='irc-table'>
+        <thead>
+            <tr>
+                <th>IP</th>
+                <th>Number<br>of<br>duplicates</th>
+                <th class='irc-left'>List of names</th>
+            </tr>
+        </thead>
+        <tbody>";
+
+    if (empty($duplicates)) {
+        echo "<tr><td colspan='3' class='irc-empty'>No clones found</td></tr>";
+    }
+
+    foreach ($duplicates as $entry) {
+        $names = '';
+        foreach ($entry['names'] as $n) {
+            $names .= '<a class="irc-user" href="' . irc_e(get_config("base_url")) . 'users/details.php?nick=' . urlencode($n) . '">' . irc_e($n) . '</a>';
+        }
+        echo "<tr>
+            <td><code>" . irc_e($entry['ip']) . "</code></td>
+            <td><span class='irc-pill irc-pill-bad'>" . (int)$entry['count'] . "</span></td>
+            <td class='irc-left'><div class='irc-users'>$names</div></td>
+        </tr>";
+    }
+
+    echo "</tbody></table></div>";
+}
+
+/* Server bans : $asnMode = true  -> '~asn:' bans
+ *               $asnMode = false -> other types of '~' bans */
+function irc_render_bans($server_ban, $asnMode)
+{
+    echo "<div class='irc-scroll irc-scroll-short'><table class='irc-table'>
+        <thead>
+            <tr>
+                <th>Type ban</th>
+                <th>Found</th>
+                <th>Affected users</th>
+                <th>duration</th>
+            </tr>
+        </thead>
+        <tbody>";
+
+    $found = 0;
+    foreach ($server_ban as $obj) {
+        if (!isset($obj->name)) {
+            continue;
+        }
+        $name = $obj->name;
+        $hasAsn = strpos($name, "~asn:") !== false;
+        $match = $asnMode ? $hasAsn : (!$hasAsn && strpos($name, "~") !== false);
+        if (!$match) {
+            continue;
+        }
+        $found++;
+        $affected = (strpos($name, '%') === 0)
+            ? '<a href="https://www.unrealircd.org/docs/Soft_ban" target="_blank" rel="noopener">unregistered</a>'
+            : 'all';
+
+        echo "<tr>
+            <td><span class='irc-pill irc-pill-bad'>" . irc_e($obj->type ?? '') . "</span></td>
+            <td><code>" . irc_e($name) . "</code></td>
+            <td>$affected</td>
+            <td>" . irc_e($obj->duration_string ?? '') . "</td>
+        </tr>";
+    }
+
+    if ($found === 0) {
+        echo "<tr><td colspan='4' class='irc-empty'>No ban found</td></tr>";
+    }
+
+    echo "</tbody></table></div>";
+}
 
 //print_r($users);
 
@@ -341,29 +470,510 @@ foreach ($users as $entry) {
     break;
 }
 
-?>
-<style>
-    table td,
-    table th {
-        padding: 2px;
-        text-align: center
-    }
+/* ------------------------------------------------------------------ *
+ * Data computation
+ * ------------------------------------------------------------------ */
 
-    table a.btn {
-        user-select: unset;
-    }
+// --- ASN duplicates
+$asnCounts = [];
+$asnCount = 0;
+foreach ($users as $entry) {
+    $geoip = $entry->geoip ?? "";
+    $asn = $geoip->asn ?? "";
+    $asname = $geoip->asname ?? "localhost ?";
+    $country_code = $geoip->country_code ?? "";
 
-    table.country td {
-        padding: 5px;
+    if (!isset($asnCounts[$asn])) {
+        $asnCounts[$asn] = [
+            'asn' => $asn,
+            'asname' => $asname,
+            'country_code' => $country_code,
+            'count' => 0
+        ];
+        $asnCount++;
     }
+    $asnCounts[$asn]['count']++;
+}
+$asnCounts = array_values($asnCounts);
+usort($asnCounts, function ($a, $b) {
+    return $b['count'] - $a['count'];
+});
 
-    @media screen and (max-width: 1100px) {
-        #main_contain .col-md-6 {
-            max-width: inherit;
-            margin: 0 auto;
+// --- Countries
+$countryCounts = [];
+foreach ($users as $user) {
+    if (!isset($user->geoip->country_code))
+        continue;
+
+    $countryCode = $user->geoip->country_code;
+    if (isset($countryCounts[$countryCode])) {
+        $countryCounts[$countryCode]++;
+    } else {
+        $countryCounts[$countryCode] = 1;
+    }
+}
+arsort($countryCounts);
+
+$countries = [];
+$counts = [];
+foreach ($countryCounts as $countryCode => $count) {
+    $countries[] = (!empty($countryCode) ? $countryCode : 'localhost');
+    $counts[] = $count;
+}
+$totalUsers = array_sum($countryCounts);
+
+// --- Clones
+$cloneIpList = irc_find_clones($users, false);
+$cloneIpv6List = irc_find_clones($users, true);
+
+// --- Statistics users
+$ipv4Count = 0;
+$ipv6Count = 0;
+$usersCount = 0;
+$accountCount = 0;
+$noAccountCount = 0;
+
+foreach ($users as $obj) {
+    $usersCount++;
+    if (isset($obj->ip)) {
+        if (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $ipv4Count++;
+        } elseif (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $ipv6Count++;
         }
     }
 
+    if (isset($obj->user)) {
+        if (isset($obj->user->account)) {
+            $accountCount++;
+        } else {
+            $noAccountCount++;
+        }
+    }
+}
+
+// avoid division by zero
+if ($usersCount > 0) {
+    $ipv4Pct = round(($ipv4Count / $usersCount) * 100, 2);
+    $ipv6Pct = round(($ipv6Count / $usersCount) * 100, 2);
+    $accountPct = round(($accountCount / $usersCount) * 100, 2);
+    $noAccountPct = round(($noAccountCount / $usersCount) * 100, 2);
+    $ipv4CountPercentage = $ipv4Pct . '%';
+    $ipv6CountPercentage = $ipv6Pct . '%';
+    $accountCountPercentage = $accountPct . '%';
+    $noAccountCountPercentage = $noAccountPct . '%';
+} else {
+    $ipv4Pct = $ipv6Pct = $accountPct = $noAccountPct = 0;
+    $ipv4CountPercentage = $ipv6CountPercentage = $accountCountPercentage = $noAccountCountPercentage = '-';
+}
+
+?>
+<style>
+    .irc {
+        --irc-accent: #3b6cf6;
+        --irc-accent-soft: rgba(59, 108, 246, .12);
+        --irc-border: rgba(127, 127, 127, .28);
+        --irc-tint: rgba(127, 127, 127, .07);
+        --irc-th: rgba(127, 127, 127, .16);
+        --irc-ok: #198754;
+        --irc-bad: #dc3545;
+        --irc-neutral: #6c757d;
+        --irc-radius: 14px;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 20px 16px 48px;
+    }
+
+    .irc *,
+    .irc *::before,
+    .irc *::after {
+        box-sizing: border-box;
+    }
+
+    /* ---------- Header ---------- */
+    .irc-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 22px;
+    }
+
+    .irc-header h2 {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 700;
+        letter-spacing: -.01em;
+    }
+
+    .irc-header p {
+        margin: 2px 0 0;
+        opacity: .65;
+        font-size: .92rem;
+    }
+
+    #SearchinUsers {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 9px 20px;
+        font-weight: 600;
+        box-shadow: 0 4px 14px rgba(59, 108, 246, .28);
+    }
+
+    /* ---------- KPI ---------- */
+    .irc-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+
+    .irc-kpi {
+        position: relative;
+        padding: 16px 18px 14px 22px;
+        border: 1px solid var(--irc-border);
+        border-radius: var(--irc-radius);
+        background: linear-gradient(var(--irc-tint), var(--irc-tint)), var(--bs-body-bg, transparent);
+        overflow: hidden;
+    }
+
+    .irc-kpi::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        background: var(--k, var(--irc-accent));
+    }
+
+    .irc-kpi-label {
+        font-size: .76rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        opacity: .65;
+        font-weight: 600;
+    }
+
+    .irc-kpi-value {
+        font-size: 1.9rem;
+        font-weight: 700;
+        line-height: 1.15;
+        margin-top: 2px;
+    }
+
+    .irc-kpi-sub {
+        font-size: .82rem;
+        opacity: .65;
+    }
+
+    /* ---------- Layout ---------- */
+    .irc-main {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+        gap: 22px;
+        align-items: start;
+    }
+
+    .irc-col {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        min-width: 0;
+    }
+
+    .irc-grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px;
+        margin-top: 22px;
+        align-items: start;
+    }
+
+    @media screen and (max-width: 1100px) {
+
+        .irc-main,
+        .irc-grid-2 {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    /* ---------- Cards ---------- */
+    .irc-card {
+        border: 1px solid var(--irc-border);
+        border-radius: var(--irc-radius);
+        background: linear-gradient(var(--irc-tint), var(--irc-tint)), var(--bs-body-bg, transparent);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
+        overflow: hidden;
+        min-width: 0;
+    }
+
+    .irc-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--irc-border);
+    }
+
+    .irc-card-head h4 {
+        margin: 0;
+        font-size: 1.02rem;
+        font-weight: 650;
+        line-height: 1.3;
+    }
+
+    .irc-card-body {
+        padding: 16px 18px;
+    }
+
+    .irc-card-foot {
+        padding: 10px 18px;
+        border-top: 1px solid var(--irc-border);
+        font-size: .88rem;
+        opacity: .8;
+    }
+
+    .irc-card-foot p {
+        margin: 0;
+    }
+
+    .irc-toolbar {
+        padding: 10px 18px;
+        border-bottom: 1px solid var(--irc-border);
+    }
+
+    .irc-toolbar input {
+        width: 100%;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid var(--irc-border);
+        background: transparent;
+        color: inherit;
+        outline: none;
+    }
+
+    .irc-toolbar input:focus {
+        border-color: var(--irc-accent);
+        box-shadow: 0 0 0 3px var(--irc-accent-soft);
+    }
+
+    /* ---------- Tables ---------- */
+    .irc-scroll {
+        overflow: auto;
+    }
+
+    .irc-scroll-tall {
+        max-height: 78vh;
+    }
+
+    .irc-scroll-short {
+        max-height: 420px;
+    }
+
+    table.irc-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 0;
+        font-size: .92rem;
+        color: inherit;
+    }
+
+    table.irc-table th,
+    table.irc-table td {
+        padding: 9px 12px;
+        text-align: center;
+        vertical-align: middle;
+        border: 0;
+        border-bottom: 1px solid var(--irc-border);
+    }
+
+    table.irc-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: linear-gradient(var(--irc-th), var(--irc-th)), var(--bs-body-bg, #fff);
+        font-size: .76rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    table.irc-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    table.irc-table tbody tr:nth-child(even) td {
+        background: rgba(127, 127, 127, .05);
+    }
+
+    table.irc-table tbody tr:hover td {
+        background: var(--irc-accent-soft);
+    }
+
+    table.irc-table td.irc-left,
+    table.irc-table th.irc-left {
+        text-align: left;
+    }
+
+    table.irc-table tr.irc-total td {
+        font-weight: 700;
+        border-top: 2px solid var(--irc-border);
+        background: var(--irc-th);
+    }
+
+    table.irc-table tr.irc-sep td {
+        border-top: 3px solid var(--irc-border);
+    }
+
+    table.irc-table td.irc-empty {
+        padding: 22px;
+        opacity: .6;
+        font-style: italic;
+    }
+
+    table.irc-table code {
+        font-size: .85em;
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: var(--irc-tint);
+        word-break: break-all;
+    }
+
+    /* ---------- Bits & pieces ---------- */
+    .irc-btn,
+    .irc-count {
+        display: inline-block;
+        min-width: 44px;
+        padding: 3px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--irc-accent);
+        background: transparent;
+        color: var(--irc-accent);
+        font-weight: 600;
+        font-size: .88rem;
+        line-height: 1.5;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background .15s, color .15s, transform .1s;
+    }
+
+    .irc-btn:hover,
+    .irc-count:hover {
+        background: var(--irc-accent);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .irc-count:active {
+        transform: scale(.95);
+    }
+
+    .irc-link {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px dotted rgba(127, 127, 127, .7);
+    }
+
+    .irc-link:hover {
+        color: var(--irc-accent);
+        border-bottom-color: var(--irc-accent);
+    }
+
+    .irc-pill {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 999px;
+        font-size: .76rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.5;
+    }
+
+    .irc-pill-ok {
+        background: var(--irc-ok);
+    }
+
+    .irc-pill-bad {
+        background: var(--irc-bad);
+    }
+
+    .irc-pill-neutral {
+        background: var(--irc-neutral);
+    }
+
+    .irc-num {
+        display: block;
+        font-weight: 600;
+    }
+
+    .irc-pill+.irc-num,
+    .irc-num+.irc-pill {
+        margin-top: 2px;
+    }
+
+    .irc-cc {
+        font-weight: 600;
+    }
+
+    .irc-flag {
+        vertical-align: -2px;
+        border-radius: 3px;
+        box-shadow: 0 0 0 1px rgba(127, 127, 127, .35);
+    }
+
+    .irc-users {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .irc-user {
+        padding: 1px 9px;
+        border-radius: 999px;
+        background: var(--irc-accent-soft);
+        color: inherit;
+        text-decoration: none;
+        font-size: .85rem;
+    }
+
+    .irc-user:hover {
+        background: var(--irc-accent);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .irc-bar {
+        display: inline-block;
+        vertical-align: middle;
+        width: 70px;
+        height: 7px;
+        margin-left: 8px;
+        border-radius: 999px;
+        background: rgba(127, 127, 127, .25);
+        overflow: hidden;
+    }
+
+    .irc-bar span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: var(--irc-accent);
+    }
+
+    .irc-chart-wrap {
+        max-width: 460px;
+        margin: 0 auto;
+    }
+
+    /* ---------- Gender colours (unchanged) ---------- */
     .text_boy {
         color: #0e77ff;
     }
@@ -371,163 +981,232 @@ foreach ($users as $entry) {
     .text_girl {
         color: #ff0592;
     }
+
+    /* ---------- Modals ---------- */
+    #searchModal .modal-content,
+    #customModal .modal-content {
+        border-radius: var(--irc-radius, 14px);
+        overflow: hidden;
+    }
+
+    #searchModal .modal-header,
+    #customModal .modal-header {
+        border-bottom: 1px solid rgba(127, 127, 127, .28);
+    }
+
+    #customModal .modal-body {
+        max-height: 70vh;
+        overflow: auto;
+    }
+
+    #results ul {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    #results ul li a {
+        display: inline-block;
+        padding: 3px 12px;
+        border-radius: 999px;
+        background: rgba(59, 108, 246, .12);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    #results ul li a:hover {
+        background: #3b6cf6;
+    }
+
+    #results .irc-hint ul {
+        display: block;
+        list-style: disc;
+        padding-left: 22px;
+    }
+
+    #customModal table {
+        width: 100%;
+        font-size: .9rem;
+    }
+
+    #customModal th,
+    #customModal td {
+        padding: 7px 10px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    #customModal td.irc-sub {
+        font-size: .82rem;
+        opacity: .75;
+    }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
-<div class="bd-example m-0 border-0">
-    <button id="SearchinUsers" type="button" class="btn btn-primary" data-toggle="modal" data-target="#searchModal">Search in Users</button>
-</div>
+<div class="irc">
 
-<div class="container d-flex justify-content-center align-items-center container-center">
-    <div class="row">
-        <div class="col-md-6 div-item">
-            <h4>Number of ASN duplicates sorted from largest to smallest</h4>
-            <?php
-            $asnCounts = [];
-            $asnCount = 0;
-            foreach ($users as $entry) {
-                $geoip = $entry->geoip;
-                $asn = $geoip->asn ?? "";
-                $asname = $geoip->asname ?? "localhost ?";
-                $country_code = $geoip->country_code ?? "";
-
-                if (!isset($asnCounts[$asn])) {
-                    $asnCounts[$asn] = [
-                        'asn' => $asn,
-                        'asname' => $asname,
-                        'country_code' => $country_code,
-                        'count' => 0
-                    ];
-                    $asnCount++;
-                }
-                $asnCounts[$asn]['count']++;
-            }
-
-            // Convertir en tableau indexé
-            $asnCounts = array_values($asnCounts);
-
-            // Trier par nombre d'occurrences en ordre décroissant
-            usort($asnCounts, function ($a, $b) {
-                return $b['count'] - $a['count'];
-            });
-
-
-            echo "<table class='table-striped' border='1'>";
-            echo "<tr><th>ASN</th><th>ASName</th><th>Country Code</th><th>Count</th><th>IPv4</th><th>IPv6</th>" . ($asnIsGood ? "<th>Good ASN</th>" : "") . "</tr>";
-
-            foreach ($asnCounts as $info) {
-                echo "<tr>";
-                echo "<td>" . (empty($info['asn']) ? '-' : '<a class="btn btn-outline-primary" href="' . get_config("base_url") . 'tools/ip-whois.php?ip=AS' . $info['asn'] . '">' . $info['asn'] . '</a>') . "</td>";
-                echo "<td>" . (empty($info['asname']) ? 'Localhost ?' : '<a href="https://www.peeringdb.com/asn/' . $info['asn'] . '" target="_blank">' . $info['asname']) . '</a>' . "</td>";
-                echo "<td>" . (empty($info['country_code']) ? '-' : "{$info['country_code']} <img src=\"https://flagcdn.com/48x36/" . strtolower($info['country_code']) . ".png\" width=\"20\" height=\"15\">") . "</td>";
-                echo "<td>" . (empty($info['asn']) ? $info['count'] : '<button type="button" class="btn btn-outline-primary" onclick="showCustomModal(this)" data-asn="' . $info['asn'] . '">' . $info['count'] . '</button>') . "</td>";
-                echo "<td>" . (empty($info['asn']) ? '-' : ipFromAsn(4, $info['asn'])) . "</td>";
-                echo "<td>" . (empty($info['asn']) ? '-' : ipFromAsn(6, $info['asn'])) . "</td>";
-                if ($asnIsGood)
-                    echo "<td>" . (empty($info['asn']) ? '-' : (asnExists($info['asn'], $asnFileContent) ? '⚠️' : '✅')) . "</td>";
-                echo "</tr>";
-            }
-
-            echo "</table>";
-            echo "$asnCount different ASNs found";
-
-            if ($asnIsGood)
-                echo "<p class=\"pt-4\">The \"Good ASN\" column is experimental. By default, all ASNs are considered good, but special attention is given to those listed in the file <em>plugins/IPCloneDetectorAndASNAnalyzer/badasn/list.txt</em>.</p>";
-            ?>
-
-
+    <!-- ===== Header ===== -->
+    <div class="irc-header">
+        <div>
+            <h2>IP Clone Detector &amp; ASN Analyzer</h2>
+            <p>Overview of connected users: networks, countries, clones and server bans.</p>
         </div>
-        <div class="col-md-6 div-item">
-            <canvas id="Chart" width="400" height="400" class="mb-5"></canvas>
+        <div class="bd-example m-0 border-0">
+            <button id="SearchinUsers" type="button" class="btn btn-primary" data-toggle="modal" data-target="#searchModal">&#128269; Search in Users</button>
+        </div>
+    </div>
+
+    <!-- ===== KPI ===== -->
+    <div class="irc-kpis">
+        <div class="irc-kpi" style="--k:#3b6cf6">
+            <div class="irc-kpi-label">Total users</div>
+            <div class="irc-kpi-value"><?= (int)$usersCount ?></div>
+            <div class="irc-kpi-sub">connected now</div>
+        </div>
+        <div class="irc-kpi" style="--k:#198754">
+            <div class="irc-kpi-label">IPv4</div>
+            <div class="irc-kpi-value"><?= (int)$ipv4Count ?></div>
+            <div class="irc-kpi-sub"><?= irc_e($ipv4CountPercentage) ?></div>
+        </div>
+        <div class="irc-kpi" style="--k:#7048e8">
+            <div class="irc-kpi-label">IPv6</div>
+            <div class="irc-kpi-value"><?= (int)$ipv6Count ?></div>
+            <div class="irc-kpi-sub"><?= irc_e($ipv6CountPercentage) ?></div>
+        </div>
+        <div class="irc-kpi" style="--k:#f59f00">
+            <div class="irc-kpi-label">With account</div>
+            <div class="irc-kpi-value"><?= (int)$accountCount ?></div>
+            <div class="irc-kpi-sub"><?= irc_e($accountCountPercentage) ?></div>
+        </div>
+        <div class="irc-kpi" style="--k:#dc3545">
+            <div class="irc-kpi-label">Without account</div>
+            <div class="irc-kpi-value"><?= (int)$noAccountCount ?></div>
+            <div class="irc-kpi-sub"><?= irc_e($noAccountCountPercentage) ?></div>
+        </div>
+        <div class="irc-kpi" style="--k:#0ca5b0">
+            <div class="irc-kpi-label">ASNs</div>
+            <div class="irc-kpi-value"><?= (int)$asnCount ?></div>
+            <div class="irc-kpi-sub"><?= count($countryCounts) ?> countries</div>
+        </div>
+    </div>
+
+    <div class="irc-main">
+
+        <!-- ===== Left column : ASN ===== -->
+        <div class="irc-col">
+            <section class="irc-card">
+                <div class="irc-card-head">
+                    <h4>Number of ASN duplicates sorted from largest to smallest</h4>
+                </div>
+                <div class="irc-toolbar">
+                    <input type="search" id="asnFilter" placeholder="Filter by ASN, name or country…" autocomplete="off">
+                </div>
+                <div class="irc-scroll irc-scroll-tall">
+                    <table class="irc-table" id="asnTable">
+                        <thead>
+                            <tr>
+                                <th>ASN</th>
+                                <th class="irc-left">ASName</th>
+                                <th>Country Code</th>
+                                <th>Count</th>
+                                <th>IPv4</th>
+                                <th>IPv6</th>
+                                <?php if ($asnIsGood) echo "<th>Good ASN</th>"; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($asnCounts as $info) : ?>
+                                <tr>
+                                    <td>
+                                        <?php if (empty($info['asn'])) : ?>
+                                            -
+                                        <?php else : ?>
+                                            <a class="irc-btn" href="<?= irc_e(get_config("base_url")) ?>tools/ip-whois.php?ip=AS<?= irc_e($info['asn']) ?>"><?= irc_e($info['asn']) ?></a>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="irc-left">
+                                        <?php if (empty($info['asname'])) : ?>
+                                            Localhost ?
+                                        <?php elseif (empty($info['asn'])) : ?>
+                                            <?= irc_e($info['asname']) ?>
+                                        <?php else : ?>
+                                            <a href="https://www.peeringdb.com/asn/<?= irc_e($info['asn']) ?>" target="_blank" rel="noopener" class="irc-link"><?= irc_e($info['asname']) ?></a>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?= irc_flag($info['country_code']) ?></td>
+                                    <td>
+                                        <?php if (empty($info['asn'])) : ?>
+                                            <?= (int)$info['count'] ?>
+                                        <?php else : ?>
+                                            <button type="button" class="irc-count" onclick="showCustomModal(this)" data-asn="<?= irc_e($info['asn']) ?>"><?= (int)$info['count'] ?></button>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?= empty($info['asn']) ? '-' : ipFromAsn(4, $info['asn']) ?></td>
+                                    <td><?= empty($info['asn']) ? '-' : ipFromAsn(6, $info['asn']) ?></td>
+                                    <?php if ($asnIsGood) : ?>
+                                        <td><?= empty($info['asn']) ? '-' : (asnExists($info['asn'], $asnFileContent) ? '⚠️' : '✅') ?></td>
+                                    <?php endif; ?>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="irc-card-foot">
+                    <p><strong><?= (int)$asnCount ?></strong> different ASNs found</p>
+                    <?php if ($asnIsGood) : ?>
+                        <p class="pt-3">The "Good ASN" column is experimental. By default, all ASNs are considered good, but special attention is given to those listed in the file <em>plugins/IPCloneDetectorAndASNAnalyzer/badasn/list.txt</em>.</p>
+                    <?php endif; ?>
+                </div>
+            </section>
+        </div>
+
+        <!-- ===== Right column : chart, countries, statistics ===== -->
+        <div class="irc-col">
+
+            <section class="irc-card">
+                <div class="irc-card-body">
+                    <div class="irc-chart-wrap">
+                        <canvas id="Chart" width="400" height="400"></canvas>
+                    </div>
+                </div>
+            </section>
 
             <script>
-                <?php
-
-                $countryCounts = [];
-
-
-                foreach ($users as $user) {
-                    if (!isset($user->geoip->country_code))
-                        continue;
-
-                    $countryCode = $user->geoip->country_code;
-
-                    if (isset($countryCounts[$countryCode])) {
-                        $countryCounts[$countryCode]++;
-                    } else {
-                        $countryCounts[$countryCode] = 1;
-                    }
-                }
-
-                // Sort the country counts in descending order
-                arsort($countryCounts);
-
-                $countries = [];
-                $counts = [];
-                //echo "Country Codes and their Counts:\n";
-                foreach ($countryCounts as $countryCode => $count) {
-                    //echo "Country Code: $countryCode - Count: $count\n";
-                    $countries[] = (!empty($countryCode) ? $countryCode : 'localhost');
-                    $counts[] = $count;
-                }
-
-                ?>
-
                 // PHP-generated countries array
                 const countries = <?php echo json_encode($countries); ?>;
                 const internetUsers = <?php echo json_encode($counts); ?>;
 
-                // Predefined set of colors
-                const predefinedColors = [
-                    'rgba(255, 99, 132, 0.2)', // Red
-                    'rgba(54, 162, 235, 0.2)', // Blue
-                    'rgba(255, 206, 86, 0.2)', // Yellow
-                    'rgba(75, 192, 192, 0.2)', // Green
-                    'rgba(153, 102, 255, 0.2)', // Purple
-                    'rgba(255, 159, 64, 0.2)', // Orange
-                    'rgba(199, 199, 199, 0.2)', // Grey
-                    'rgba(83, 102, 255, 0.2)', // Another Blue
-                    'rgba(255, 99, 255, 0.2)', // Pink
-                    'rgba(99, 255, 132, 0.2)', // Light Green
-                    'rgba(255, 219, 88, 0.2)', // Light Yellow
-                    'rgba(255, 99, 64, 0.2)', // Light Red
-                    'rgba(75, 255, 192, 0.2)', // Mint Green
-                    'rgba(192, 75, 255, 0.2)', // Light Purple
-                    'rgba(159, 255, 64, 0.2)', // Light Orange
-                    'rgba(132, 99, 255, 0.2)', // Periwinkle
-                    'rgba(64, 255, 199, 0.2)', // Turquoise
-                    'rgba(255, 64, 159, 0.2)', // Salmon
-                    'rgba(255, 192, 75, 0.2)', // Gold
-                    'rgba(102, 255, 83, 0.2)' // Lime Green
-                ];
-
-                const predefinedBorderColors = [
-                    'rgba(255, 99, 132, 1)', // Red
-                    'rgba(54, 162, 235, 1)', // Blue
-                    'rgba(255, 206, 86, 1)', // Yellow
-                    'rgba(75, 192, 192, 1)', // Green
-                    'rgba(153, 102, 255, 1)', // Purple
-                    'rgba(255, 159, 64, 1)', // Orange
-                    'rgba(199, 199, 199, 1)', // Grey
-                    'rgba(83, 102, 255, 1)', // Another Blue
-                    'rgba(255, 99, 255, 1)', // Pink
-                    'rgba(99, 255, 132, 1)', // Light Green
-                    'rgba(255, 219, 88, 1)', // Light Yellow
-                    'rgba(255, 99, 64, 1)', // Light Red
-                    'rgba(75, 255, 192, 1)', // Mint Green
-                    'rgba(192, 75, 255, 1)', // Light Purple
-                    'rgba(159, 255, 64, 1)', // Light Orange
-                    'rgba(132, 99, 255, 1)', // Periwinkle
-                    'rgba(64, 255, 199, 1)', // Turquoise
-                    'rgba(255, 64, 159, 1)', // Salmon
-                    'rgba(255, 192, 75, 1)', // Gold
-                    'rgba(102, 255, 83, 1)' // Lime Green
+                // Predefined set of colors (RGB)
+                const predefinedRgb = [
+                    [255, 99, 132], // Red
+                    [54, 162, 235], // Blue
+                    [255, 206, 86], // Yellow
+                    [75, 192, 192], // Green
+                    [153, 102, 255], // Purple
+                    [255, 159, 64], // Orange
+                    [199, 199, 199], // Grey
+                    [83, 102, 255], // Another Blue
+                    [255, 99, 255], // Pink
+                    [99, 255, 132], // Light Green
+                    [255, 219, 88], // Light Yellow
+                    [255, 99, 64], // Light Red
+                    [75, 255, 192], // Mint Green
+                    [192, 75, 255], // Light Purple
+                    [159, 255, 64], // Light Orange
+                    [132, 99, 255], // Periwinkle
+                    [64, 255, 199], // Turquoise
+                    [255, 64, 159], // Salmon
+                    [255, 192, 75], // Gold
+                    [102, 255, 83] // Lime Green
                 ];
 
                 // Generate colors for each country based on index
-                const backgroundColors = countries.map((_, index) => predefinedColors[index % predefinedColors.length]);
-                const borderColors = countries.map((_, index) => predefinedBorderColors[index % predefinedBorderColors.length]);
+                const backgroundColors = countries.map((_, i) => `rgba(${predefinedRgb[i % predefinedRgb.length].join(',')}, 0.75)`);
+                const borderColors = countries.map((_, i) => `rgba(${predefinedRgb[i % predefinedRgb.length].join(',')}, 1)`);
 
                 // Configuration of the chart
                 const data = {
@@ -537,7 +1216,8 @@ foreach ($users as $entry) {
                         data: internetUsers,
                         backgroundColor: backgroundColors,
                         borderColor: borderColors,
-                        borderWidth: 1
+                        borderWidth: 1,
+                        hoverOffset: 8
                     }]
                 };
 
@@ -550,13 +1230,20 @@ foreach ($users as $entry) {
                         plugins: {
                             legend: {
                                 position: 'top',
+                                labels: {
+                                    boxWidth: 12,
+                                    usePointStyle: true
+                                }
                             },
                             title: {
                                 display: true,
-                                text: 'Number of Connected Users by Country'
+                                text: 'Number of Connected Users by Country',
+                                font: {
+                                    size: 15
+                                }
                             },
                             datalabels: {
-                                color: '#343a40',
+                                color: '#1f2937',
                                 font: {
                                     weight: 'bold',
                                     size: 12
@@ -584,260 +1271,120 @@ foreach ($users as $entry) {
                     config
                 );
             </script>
-            <?php
-            $totalUsers = array_sum($countryCounts);
-            echo "<table class='country table-striped m-auto mb-5' border='1'>
-            <tr>
-                <th>Country</th>
-                <th>Online number</th>
-                <th>Percentage</th>
-            </tr>";
 
-            foreach ($countryCounts as $countryCode => $count) {
-                $percentage = $totalUsers > 0 ? ($count / $totalUsers) * 100 : 0;
-                //echo "Country Code: $countryCode - Count: $count\n";
-                $countries[] = $countryCode;
-                $counts[] = $count;
-                $country = getCountryName($countryCode);
-                echo "<tr>
-                <td>" . (empty($countryCode) ? '' : "<img src=\"https://flagcdn.com/48x36/" . strtolower($countryCode) . ".png\" width=\"20\" height=\"15\">") . " " . (!empty($countryCode) ? getCountryName($countryCode) : 'localhost') . "</td>
-                <td><button type=\"button\" class=\"btn btn-outline-primary\" onclick=\"showListUsersModal(this)\" data-country=\"{$country}\" data-country_code=\"{$countryCode}\">" . $count . "</button></td>
-                <td>" . number_format($percentage, 2) . "%</td>
-            </tr>";
-            }
+            <section class="irc-card">
+                <div class="irc-card-head">
+                    <h4>Users by country</h4>
+                </div>
+                <div class="irc-scroll irc-scroll-short">
+                    <table class="irc-table country">
+                        <thead>
+                            <tr>
+                                <th class="irc-left">Country</th>
+                                <th>Online number</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($countryCounts as $countryCode => $count) :
+                                $percentage = $totalUsers > 0 ? ($count / $totalUsers) * 100 : 0;
+                                $country = getCountryName($countryCode);
+                            ?>
+                                <tr>
+                                    <td class="irc-left">
+                                        <?php if (!empty($countryCode)) : ?>
+                                            <img class="irc-flag" loading="lazy" src="https://flagcdn.com/48x36/<?= strtolower(irc_e($countryCode)) ?>.png" width="20" height="15" alt="<?= irc_e($countryCode) ?>">
+                                        <?php endif; ?>
+                                        <?= !empty($countryCode) ? irc_e($country) : 'localhost' ?>
+                                    </td>
+                                    <td><button type="button" class="irc-count" onclick="showListUsersModal(this)" data-country="<?= irc_e($country) ?>" data-country_code="<?= irc_e($countryCode) ?>"><?= (int)$count ?></button></td>
+                                    <td><?= number_format($percentage, 2) ?>%<span class="irc-bar"><span style="width:<?= round($percentage, 2) ?>%"></span></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <tr class="irc-total">
+                                <td class="irc-left">Total</td>
+                                <td><?= count($users) ?></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-            echo "<tr class='font-weight-bold'>
-            <td>Total</td>
-            <td>" . count($users) . "</td>
-            <td></td>
-        </tr>";
-
-            echo "</table>";
-
-            ?>
-
-
-            <h4 class="mt-5">Show clones on IP</h4>
-            <?php
-            $ipList = [];
-            foreach ($users as $key => $obj) {
-                if (isset($obj->ip)) {
-                    $ip = $obj->ip;
-                    if (array_key_exists($ip, $ipList)) {
-                        $ipList[$ip]['count']++;
-                        $ipList[$ip]['names'][] = $obj->name;
-                    } else {
-                        $ipList[$ip] = [
-                            'count' => 1,
-                            'names' => [$obj->name]
-                        ];
-                    }
-                }
-            }
-
-            $duplicateList = [];
-            foreach ($ipList as $ip => $info) {
-                if ($info['count'] > 1) {
-                    $duplicateList[] = [
-                        'ip' => $ip,
-                        'count' => $info['count'],
-                        'names' => implode(', ', $info['names'])
-                    ];
-                }
-            }
-
-            echo "<table class='table-striped' border='1'>
-                <tr>
-                    <th>IP</th>
-                    <th>Number<br>of<br>duplicates</th>
-                    <th>List of names</th>
-                </tr>";
-
-            foreach ($duplicateList as $entry) {
-                echo "<tr>
-                    <td>{$entry['ip']}</td>
-                    <td>{$entry['count']}</td>
-                    <td>{$entry['names']}</td>
-                </tr>";
-            }
-
-            echo "</table>";
-            ?>
-            <hr>
-            <h4>Show clones based on the first 4 segments of IPv6 addresses</h4>
-            <?php
-            $ipList = [];
-            foreach ($users as $key => $obj) {
-                if (isset($obj->ip) && strpos($obj->ip, ':') !== false) {
-                    // Extraire les quatre premiers segments de l'IPv6
-                    $ipSegments = explode(':', $obj->ip);
-                    $shortIp = implode(':', array_slice($ipSegments, 0, 4));
-
-                    if (array_key_exists($shortIp, $ipList)) {
-                        $ipList[$shortIp]['count']++;
-                        $ipList[$shortIp]['names'][] = $obj->name;
-                    } else {
-                        $ipList[$shortIp] = [
-                            'count' => 1,
-                            'names' => [$obj->name]
-                        ];
-                    }
-                }
-            }
-
-            $duplicateList = [];
-            foreach ($ipList as $ip => $info) {
-                if ($info['count'] > 1) {
-                    $duplicateList[] = [
-                        'ip' => $ip,
-                        'count' => $info['count'],
-                        'names' => implode(', ', $info['names'])
-                    ];
-                }
-            }
-
-            echo "<table class='table-striped' border='1'>
-                <tr>
-                    <th>IP</th>
-                    <th>Number<br>of<br>duplicates</th>
-                    <th>List of names</th>
-                </tr>";
-
-            foreach ($duplicateList as $entry) {
-                echo "<tr>
-                    <td>{$entry['ip']}</td>
-                    <td>{$entry['count']}</td>
-                    <td>{$entry['names']}</td>
-                </tr>";
-            }
-
-            echo "</table>";
-            ?>
-
-            <hr>
-            <h4>Statistics Users</h4>
-            <?php
-            $ipv4Count = 0;
-            $ipv6Count = 0;
-            $usersCount = 0;
-            $accountCount = 0;
-            $noAccountCount = 0;
-
-            foreach ($users as $obj) {
-                $usersCount++;
-                if (isset($obj->ip)) {
-                    if (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                        $ipv4Count++;
-                    } elseif (filter_var($obj->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                        $ipv6Count++;
-                    }
-                }
-                if (isset($obj->user)) {
-                    if (isset($obj->user->account)) {
-                        $accountCount++;
-                    } else {
-                        $noAccountCount++;
-                    }
-                }
-            }
-
-            echo "<table class='table-striped' border='1'>
+            <section class="irc-card">
+                <div class="irc-card-head">
+                    <h4>Statistics Users</h4>
+                </div>
+                <table class="irc-table">
+                    <thead>
                         <tr>
-                            <th>Type</th>
+                            <th class="irc-left">Type</th>
                             <th>Online number</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="irc-left">Number of total users</td>
+                            <td><?= (int)$usersCount ?></td>
+                            <td>-</td>
+                        </tr>
+                        <tr class="irc-sep">
+                            <td class="irc-left">Number of IPv4</td>
+                            <td><?= (int)$ipv4Count ?></td>
+                            <td><?= irc_e($ipv4CountPercentage) ?><span class="irc-bar"><span style="width:<?= $ipv4Pct ?>%"></span></span></td>
                         </tr>
                         <tr>
-                            <td>Number of total users</td>
-                            <td>{$usersCount}</td>
+                            <td class="irc-left">Number of IPv6</td>
+                            <td><?= (int)$ipv6Count ?></td>
+                            <td><?= irc_e($ipv6CountPercentage) ?><span class="irc-bar"><span style="width:<?= $ipv6Pct ?>%"></span></span></td>
+                        </tr>
+                        <tr class="irc-sep">
+                            <td class="irc-left">Number of account</td>
+                            <td><?= (int)$accountCount ?></td>
+                            <td><?= irc_e($accountCountPercentage) ?><span class="irc-bar"><span style="width:<?= $accountPct ?>%"></span></span></td>
                         </tr>
                         <tr>
-                            <td>Number of IPv4</td>
-                            <td>{$ipv4Count}</td>
+                            <td class="irc-left">Number of no account</td>
+                            <td><?= (int)$noAccountCount ?></td>
+                            <td><?= irc_e($noAccountCountPercentage) ?><span class="irc-bar"><span style="width:<?= $noAccountPct ?>%"></span></span></td>
                         </tr>
-                        <tr>
-                            <td>Number of IPv6</td>
-                            <td>{$ipv6Count}</td>
-                        </tr>
-                        <tr>
-                            <td>Number of account</td>
-                            <td>{$accountCount}</td>
-                        </tr>
-                        <tr>
-                            <td>Number of no account</td>
-                            <td>{$noAccountCount}</td>
-                        </tr>
-                    </table>";
-            ?>
+                    </tbody>
+                </table>
+            </section>
 
-
-            <h4 class="mt-4">Bans server corresponding to '~asn:'</h4>
-            <?php
-            echo "<table class='table-striped' border='1'>
-                    <tr>
-                        <th>Type ban</th>
-                        <th>Found</th>
-                        <th>Affected users</th>
-                        <th>duration</th>
-                    </tr>
-                ";
-            foreach ($server_ban as $obj) {
-                $usersCount++;
-                if (isset($obj->name)) {
-                    if (strpos($obj->name, "~asn:") !== false && preg_match('/^\%/', $obj->name, $matches) === 1) {
-                        echo "<tr>
-                            <td>{$obj->type}</td>
-                            <td>{$obj->name}</td>
-                            <td><a href=\"https://www.unrealircd.org/docs/Soft_ban\" target=\"_blank\">unregistered</a></td>
-                            <td>{$obj->duration_string}</td>
-                        </tr>";
-                    } else if (strpos($obj->name, "~asn:") !== false) {
-                        echo "<tr>
-                            <td>{$obj->type}</td>
-                            <td>{$obj->name}</td>
-                            <td>all</td>
-                            <td>{$obj->duration_string}</td>
-                        </tr>";
-                    }
-                }
-            }
-            echo "</table>";
-            ?>
-
-
-            <h4 class="mt-4">Bans server corresponding to other type of '~'</h4>
-            <?php
-
-            echo "<table class='table-striped' border='1'>
-                    <tr>
-                        <th>Type ban</th>
-                        <th>Found</th>
-                        <th>Affected users</th>
-                        <th>duration</th>
-                    </tr>
-                ";
-            foreach ($server_ban as $obj) {
-                $usersCount++;
-                if (isset($obj->name)) {
-                    if (strpos($obj->name, "~asn:") === false && strpos($obj->name, "~") !== false && preg_match('/^\%/', $obj->name, $matches) === 1) {
-                        echo "<tr>
-                            <td>{$obj->type}</td>
-                            <td>{$obj->name}</td>
-                             <td><a href=\"https://www.unrealircd.org/docs/Soft_ban\" target=\"_blank\">unregistered</a></td>
-                            <td>{$obj->duration_string}</td>
-                        </tr>";
-                    } else if (strpos($obj->name, "~asn:") === false && strpos($obj->name, "~") !== false) {
-                        echo "<tr>
-                            <td>{$obj->type}</td>
-                            <td>{$obj->name}</td>
-                            <td>all</td>
-                            <td>{$obj->duration_string}</td>
-                        </tr>";
-                    }
-                }
-            }
-            echo "</table>";
-            ?>
         </div>
+    </div>
+
+    <!-- ===== Clones & bans ===== -->
+    <div class="irc-grid-2">
+        <section class="irc-card">
+            <div class="irc-card-head">
+                <h4>Show clones on IP</h4>
+            </div>
+            <?php irc_render_clones($cloneIpList); ?>
+        </section>
+
+        <section class="irc-card">
+            <div class="irc-card-head">
+                <h4>Show clones based on the first 4 segments of IPv6 addresses</h4>
+            </div>
+            <?php irc_render_clones($cloneIpv6List); ?>
+        </section>
+
+        <section class="irc-card">
+            <div class="irc-card-head">
+                <h4>Bans server corresponding to '~asn:'</h4>
+            </div>
+            <?php irc_render_bans($server_ban, true); ?>
+        </section>
+
+        <section class="irc-card">
+            <div class="irc-card-head">
+                <h4>Bans server corresponding to other type of '~'</h4>
+            </div>
+            <?php irc_render_bans($server_ban, false); ?>
+        </section>
     </div>
 </div>
 
@@ -884,7 +1431,7 @@ foreach ($users as $entry) {
 </div>
 
 <div class="modal fade" id="customModal" tabindex="-1" aria-labelledby="customModalLabel" aria-hidden="true">
-    <div class="modal-dialog" style="max-width: 600px;">
+    <div class="modal-dialog" style="max-width: 720px;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="customModalLabel">Modal title</h5>
@@ -900,6 +1447,53 @@ foreach ($users as $entry) {
 </div>
 
 <script>
+    const IRC_BASE_URL = <?= json_encode(get_config("base_url")) ?>;
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, function(c) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            } [c];
+        });
+    }
+
+    function extractionRealname(realname) {
+        const real_name = String(realname || '').split(/[/ ]/);
+        return real_name;
+    }
+
+    function genderClass(realname) {
+        const part = extractionRealname(realname);
+        if (part && part[1] && /^(H|M|h|m)$/.test(part[1])) return 'boy';
+        if (part && part[1] && /^(F|f)$/.test(part[1])) return 'girl';
+        return 'regular';
+    }
+
+    function flagHtml(geoip) {
+        const code = geoip && geoip.country_code;
+        if (!code) return 'N/A';
+        return escapeHtml(code) + ' <img class="irc-flag" src="https://flagcdn.com/48x36/' + escapeHtml(code.toLowerCase()) + '.png" width="20" height="15" alt="' + escapeHtml(code) + '">';
+    }
+
+    function userLink(item) {
+        const name = item.name || '';
+        const sex = genderClass(item.user && item.user.realname);
+        return '<a href="' + IRC_BASE_URL + 'users/details.php?nick=' + encodeURIComponent(name) + '"><strong class="text_' + sex + '">' + escapeHtml(name || 'N/A') + '</strong></a>';
+    }
+
+    /* ---------- ASN table filter ---------- */
+    document.getElementById('asnFilter').addEventListener('input', function() {
+        const q = this.value.trim().toLowerCase();
+        document.querySelectorAll('#asnTable tbody tr').forEach(function(tr) {
+            tr.style.display = (q === '' || tr.textContent.toLowerCase().indexOf(q) !== -1) ? '' : 'none';
+        });
+    });
+
+    /* ---------- Search in users ---------- */
     document.getElementById('searchForm').addEventListener('submit', function(event) {
         event.preventDefault();
 
@@ -907,24 +1501,22 @@ foreach ($users as $entry) {
         const searchFromChannel = document.getElementById('searchFromChannel').value;
         const modeStrict = document.getElementById('modeStrict').checked;
         const results = document.getElementById('results');
-        results.innerHTML = '';
+        results.textContent = 'Searching…';
 
         fetch(window.location.href + 'search.php?modeStrict=' + (modeStrict ? '1' : '0') + '&searchValue=' + encodeURIComponent(searchValue) + '&searchFromChannel=' + encodeURIComponent(searchFromChannel))
             .then(response => response.json())
             .then(data => {
                 const resultsDiv = document.getElementById('results');
-                resultsDiv.innerHTML = data.length + ' results';
+                resultsDiv.innerHTML = '<strong>' + data.length + ' results</strong>';
 
                 if (data.length > 0) {
                     const ul = document.createElement('ul');
 
                     data.forEach(item => {
                         const li = document.createElement('li');
+                        const sex = genderClass(item.user && item.user.realname);
 
-                        let sex = extractionRealname(item.user.realname);
-                        sex = (sex && sex[1] && /^(H|M|h|m)$/.test(sex[1]) ? 'boy' : (sex && sex[1] && /^(F|f)$/.test(sex[1]) ? 'girl' : 'regular'));
-
-                        li.innerHTML = `<a class="link-opacity-50-hover text_${sex}" href="<?php echo get_config("base_url"); ?>users/details.php?nick=${item.name}" target="_blank">${item.name}</a>`;
+                        li.innerHTML = `<a class="link-opacity-50-hover text_${sex}" href="${IRC_BASE_URL}users/details.php?nick=${encodeURIComponent(item.name)}" target="_blank">${escapeHtml(item.name)}</a>`;
                         ul.appendChild(li);
                     });
 
@@ -943,18 +1535,20 @@ foreach ($users as $entry) {
     document.getElementById('SearchinUsers').addEventListener('click', function() {
         document.getElementById('searchForm').reset();
         document.getElementById('results').innerHTML = `
-            <p>
-                Will search for all users matching the search criteria.<br>
-                Examples of search criteria :
-            </p>
-            <ul>
-                <li>known-users</li>
-                <li>3215</li>
-                <li>FR</li>
-                <li>123.123.123.123</li>
-                <li>...</li>
-            </ul>
-            <p>In the optional channel field, you can enter a channel to search for the value in that channel.</p>
+            <div class="irc-hint">
+                <p>
+                    Will search for all users matching the search criteria.<br>
+                    Examples of search criteria :
+                </p>
+                <ul>
+                    <li>known-users</li>
+                    <li>3215</li>
+                    <li>FR</li>
+                    <li>123.123.123.123</li>
+                    <li>...</li>
+                </ul>
+                <p>In the optional channel field, you can enter a channel to search for the value in that channel.</p>
+            </div>
         `;
     });
 
@@ -962,37 +1556,36 @@ foreach ($users as $entry) {
     function showCustomModal(button) {
         var dataAsn = button.getAttribute('data-asn');
         var modalTitle = document.getElementById('customModalLabel');
-        var modalBody = document.querySelector('#customModal .modal-body');
         var resultsDiv = document.getElementById('custom_results');
 
-        resultsDiv.innerHTML = '';
+        resultsDiv.textContent = 'Loading…';
 
         modalTitle.textContent = 'List of users with AS' + dataAsn;
 
-        fetch(window.location.href + 'users_by_asn.php?asn=' + dataAsn)
+        fetch(window.location.href + 'users_by_asn.php?asn=' + encodeURIComponent(dataAsn))
             .then(response => response.json())
             .then(data => {
 
-                let html = `<table class='table table-bordered'>`;
+                let html = `<table class='irc-table table table-bordered'>`;
                 html += `<thead><tr><th>Nickname</th><th>Country</th><th>ASN</th><th>Asname</th><th>Type IP</th></tr></thead>`;
                 html += `<tbody>`;
 
                 for (let i = 0; i < data.length; i++) {
                     const item = data[i];
-                    const type_ip = /\./.test(item.ip) ? 'IPv4' : 'IPv6';
-                    const name = item.name || 'N/A';
-                    let sex = extractionRealname(item.user.realname);
-                    sex = (sex && sex[1] && /^(H|M|h|m)$/.test(sex[1]) ? 'boy' : (sex && sex[1] && /^(F|f)$/.test(sex[1]) ? 'girl' : 'regular'));
+                    const geoip = item.geoip || {};
+                    const type_ip = /\./.test(item.ip || '') ? 'IPv4' : 'IPv6';
+
                     html += `<tr>`;
-                    html += `<td><a href="<?= get_config("base_url") ?>users/details.php?nick=${item.name || ''}"><strong class="text_${sex}">${name}</strong></a></td>`;
-                    html += `<td>${item.geoip.country_code + ' <img src="https://flagcdn.com/48x36/' + item.geoip.country_code.toLowerCase() + '.png" width="20" height="15">' || 'N/A'}</td>`;
-                    html += `<td>${item.geoip.asn || 'N/A'}</td>`;
-                    html += `<td>${item.geoip.asname || 'N/A'}</td>`;
-                    html += `<td>${(type_ip)}</td>`;
+                    html += `<td>${userLink(item)}</td>`;
+                    html += `<td>${flagHtml(geoip)}</td>`;
+                    html += `<td>${escapeHtml(geoip.asn || 'N/A')}</td>`;
+                    html += `<td>${escapeHtml(geoip.asname || 'N/A')}</td>`;
+                    html += `<td>${type_ip}</td>`;
+                    html += `</tr>`;
                 }
 
                 if (Object.keys(data).length === 0) {
-                    html += `<tr><td colspan="6">The value was not found.</td></tr>`;
+                    html += `<tr><td colspan="5">The value was not found.</td></tr>`;
                 }
 
                 html += `</tbody></table>`;
@@ -1012,46 +1605,44 @@ foreach ($users as $entry) {
         var dataCountry_code = button.getAttribute('data-country_code');
         var dataCountry = button.getAttribute('data-country');
         var modalTitle = document.getElementById('customModalLabel');
-        var modalBody = document.querySelector('#customModal .modal-body');
         var resultsDiv = document.getElementById('custom_results');
 
-        resultsDiv.innerHTML = '';
+        resultsDiv.textContent = 'Loading…';
 
-        modalTitle.innerHTML = '<p>List of users of country ' + dataCountry + ' (' + dataCountry_code + ')</p>';
+        modalTitle.innerHTML = '<p class="mb-0">List of users of country ' + escapeHtml(dataCountry) + ' (' + escapeHtml(dataCountry_code) + ')</p>';
 
-        fetch(window.location.href + 'users_by_country.php?country=' + dataCountry_code)
+        fetch(window.location.href + 'users_by_country.php?country=' + encodeURIComponent(dataCountry_code))
             .then(response => response.json())
             .then(data => {
 
                 let numberAccount = 0;
                 let numberNoAccount = 0;
-                let html = `<table class='table table-bordered'>`;
+                let html = `<table class='irc-table table table-bordered'>`;
                 html += `<thead><tr><th>Nickname</th><th>Country</th><th>Account</th></tr></thead>`;
                 html += `<tbody>`;
 
                 for (let i = 0; i < data.length; i++) {
                     const item = data[i];
-                    if (item.user.account)
+                    const account = item.user && item.user.account;
+                    if (account)
                         numberAccount++;
                     else
                         numberNoAccount++;
 
-                    let sex = extractionRealname(item.user.realname);
-                    sex = (sex && sex[1] && /^(H|M|h|m)$/.test(sex[1]) ? 'boy' : (sex && sex[1] && /^(F|f)$/.test(sex[1]) ? 'girl' : 'regular'));
-
                     html += `<tr>`;
-                    html += `<td><a href="<?= get_config("base_url") ?>users/details.php?nick=${item.name || ''}"><strong class="text_${sex}">${item.name || 'N/A'}</a></strong></td>`;
-                    html += `<td>${item.geoip.country_code + ' <img src="https://flagcdn.com/48x36/' + item.geoip.country_code.toLowerCase() + '.png" width="20" height="15">' || 'N/A'}</td>`;
-                    html += `<td>${item.user.account || '<span class="text-danger">N/A</span>'}</td>`;
+                    html += `<td>${userLink(item)}</td>`;
+                    html += `<td>${flagHtml(item.geoip)}</td>`;
+                    html += `<td>${account ? escapeHtml(account) : '<span class="text-danger">N/A</span>'}</td>`;
+                    html += `</tr>`;
                 }
 
                 if (Object.keys(data).length === 0) {
-                    html += `<tr><td colspan="6">The value was not found.</td></tr>`;
+                    html += `<tr><td colspan="3">The value was not found.</td></tr>`;
                 }
 
                 html += `</tbody></table>`;
 
-                modalTitle.innerHTML += `<p style="font-size:13px">Number of accounts: ${numberAccount} | Number of no-accounts: ${numberNoAccount}</p>`;
+                modalTitle.innerHTML += `<p class="mb-0" style="font-size:13px">Number of accounts: ${numberAccount} | Number of no-accounts: ${numberNoAccount}</p>`;
 
                 resultsDiv.innerHTML = html;
             })
@@ -1063,19 +1654,8 @@ foreach ($users as $entry) {
         var myModal = new bootstrap.Modal(document.getElementById('customModal'));
         myModal.show();
     }
-
-    function extractionRealname(realname) {
-        const real_name = realname.split(/[/ ]/);
-        return real_name;
-    }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!--
-<div class="container d-flex justify-content-center align-items-center container-center">
-    <div class="row">
-    </div>
-</div>
--->
 <?php
 require_once "../../inc/footer.php";
 ?>
