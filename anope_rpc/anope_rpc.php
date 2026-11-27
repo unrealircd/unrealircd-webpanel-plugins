@@ -9,6 +9,8 @@
 @minver 0.9
 @maxver *
 @license GPLv3
+@icon https://github.com/Madriix/unrealircd-webpanel-plugins/blob/main/anope_rpc/screenshots/anope.png?raw=true
+@screenshot https://github.com/Madriix/unrealircd-webpanel-plugins/blob/main/anope_rpc/screenshots/screenshot.png?raw=true
 */
 
 require_once __DIR__ . "/lib/client.php";
