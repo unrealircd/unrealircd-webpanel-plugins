@@ -28,7 +28,7 @@ if (!empty($_GET['c'])) {
 	?>
 	<a href="<?= ar_h($base) ?>channels.php" class="btn btn-sm btn-outline-secondary mb-3">← <?= th('All channels') ?></a>
 	<div class="card mb-3"><div class="card-body">
-		<div class="anope-topic"><?= c_topic($c) !== '' ? ar_h(c_topic($c)) : '<span class="text-muted">' . th('No topic') . '</span>' ?></div>
+		<div class="anope-topic"><?= c_topic($c) !== '' ? ar_irc_html(c_topic($c)) : '<span class="text-muted">' . th('No topic') . '</span>' ?></div>
 		<div class="small text-muted mt-1">
 			<?php if (c_topic_setter($c)): ?><?= c_topic_time($c) ? th('Set by %s, %s ago', c_topic_setter($c), ar_ago(c_topic_time($c))) : th('Set by %s', c_topic_setter($c)) ?> · <?php endif; ?>
 			<?= th('Created %s (%s ago)', ar_date(c_created($c)), ar_ago(c_created($c))) ?> · <?= th('Modes') ?> <code><?= ar_h(c_modes($c)) ?></code> · <?= th('%d members', count($members)) ?>
@@ -84,7 +84,7 @@ $total = array_sum(array_map(fn($c) => count(c_users($c)), $chans));
 			<td><a href="?c=<?= rawurlencode(c_name($c)) ?>"><b><?= ar_h(c_name($c)) ?></b></a></td>
 			<td data-order="<?= count($m) ?>"><?= count($m) ?></td>
 			<td><?= $ops ?></td>
-			<td class="small text-truncate" style="max-width:420px" title="<?= ar_h(c_topic($c)) ?>"><?= ar_h(c_topic($c)) ?></td>
+			<td class="small text-truncate" style="max-width:420px" data-search="<?= ar_h(ar_irc_strip(c_topic($c))) ?>" title="<?= ar_h(ar_irc_strip(c_topic($c))) ?>"><?= ar_irc_html(c_topic($c)) ?></td>
 			<td class="small"><code><?= ar_h(c_modes($c)) ?></code></td>
 			<td data-order="<?= c_created($c) ?>" class="small"><?= ar_ago(c_created($c)) ?></td>
 		</tr>

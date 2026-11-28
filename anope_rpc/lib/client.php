@@ -401,6 +401,75 @@ function a_nicks($a)
 
 /* ---------- Display helpers ---------- */
 
+/** Regex matching IRC formatting codes (bold, italic, underline, strike, mono, reverse, reset, colours, hex colours) */
+const AR_IRC_CODES = '/(\x02|\x1D|\x1F|\x1E|\x11|\x16|\x0F|\x03(?:\d{1,2}(?:,\d{1,2})?)?|\x04(?:[0-9a-fA-F]{6}(?:,[0-9a-fA-F]{6})?)?)/';
+
+/** Removes IRC formatting codes (for title attributes, sorting, plain text) */
+function ar_irc_strip(string $s): string
+{
+	return preg_replace(AR_IRC_CODES, '', $s);
+}
+
+/** mIRC colour number (0–98) → hex, null for 99/unknown (= default colour) */
+function ar_irc_color(int $n): ?string
+{
+	static $p = null;
+	if ($p === null) $p = explode(' ',
+		'ffffff 000000 00007f 009300 ff0000 7f0000 9c009c fc7f00 ffff00 00fc00 009393 00ffff 0000fc ff00ff 7f7f7f d2d2d2 '
+		. '470000 472100 474700 324700 004700 00472c 004747 002747 000047 2e0047 470047 47002a '
+		. '740000 743a00 747400 517400 007400 007449 007474 004074 000074 4b0074 740074 740045 '
+		. 'b50000 b56300 b5b500 7db500 00b500 00b571 00b5b5 0063b5 0000b5 7500b5 b500b5 b5006b '
+		. 'ff0000 ff8c00 ffff00 b2ff00 00ff00 00ffa0 00ffff 008cff 0000ff a500ff ff00ff ff0098 '
+		. 'ff5959 ffb459 ffff71 cfff60 6fff6f 65ffc9 6dffff 59b4ff 5959ff c459ff ff66ff ff59bc '
+		. 'ff9c9c ffd39c ffff9c e2ff9c 9cff9c 9cffdb 9cffff 9cd3ff 9c9cff dc9cff ff9cff ff94d3 '
+		. '000000 131313 282828 363636 4d4d4d 656565 818181 9f9f9f bcbcbc e2e2e2 ffffff');
+	return isset($p[$n]) ? '#' . $p[$n] : null;
+}
+
+/** Converts IRC formatting codes to escaped HTML (<span> with inline styles) */
+function ar_irc_html(string $s): string
+{
+	$st = ['b' => false, 'i' => false, 'u' => false, 's' => false, 'm' => false, 'r' => false, 'fg' => null, 'bg' => null];
+	$out = '';
+	foreach (preg_split(AR_IRC_CODES, $s, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY) as $tok) {
+		$c = $tok[0];
+		// Every control byte below is always captured as a delimiter, so a text chunk never starts with one
+		if (strpos("\x02\x1D\x1F\x1E\x11\x16\x0F\x03\x04", $c) !== false) {
+			switch ($c) {
+				case "\x02": $st['b'] = !$st['b']; break;
+				case "\x1D": $st['i'] = !$st['i']; break;
+				case "\x1F": $st['u'] = !$st['u']; break;
+				case "\x1E": $st['s'] = !$st['s']; break;
+				case "\x11": $st['m'] = !$st['m']; break;
+				case "\x16": $st['r'] = !$st['r']; break;
+				case "\x0F": $st = array_map(fn($v) => is_bool($v) ? false : null, $st); break;
+				case "\x03":
+				case "\x04":
+					$parts = explode(',', substr($tok, 1), 2);
+					if ($parts[0] === '') { $st['fg'] = $st['bg'] = null; break; }
+					$conv = $c === "\x03" ? fn($x) => ar_irc_color((int)$x) : fn($x) => '#' . strtolower($x);
+					$st['fg'] = $conv($parts[0]);
+					if (isset($parts[1])) $st['bg'] = $conv($parts[1]);
+					break;
+			}
+			continue;
+		}
+		$css = [];
+		[$fg, $bg] = $st['r'] ? [$st['bg'], $st['fg']] : [$st['fg'], $st['bg']];
+		if ($st['r']) { $fg = $fg ?? 'var(--bs-body-bg, #fff)'; $bg = $bg ?? 'var(--bs-body-color, #000)'; }
+		if ($fg) $css[] = 'color:' . $fg;
+		if ($bg) $css[] = 'background-color:' . $bg;
+		if ($st['b']) $css[] = 'font-weight:bold';
+		if ($st['i']) $css[] = 'font-style:italic';
+		$deco = array_filter([$st['u'] ? 'underline' : '', $st['s'] ? 'line-through' : '']);
+		if ($deco) $css[] = 'text-decoration:' . implode(' ', $deco);
+		if ($st['m']) $css[] = 'font-family:var(--bs-font-monospace, monospace)';
+		$txt = ar_h(preg_replace('/[\x00-\x08\x0A-\x1F\x7F]/', '', $tok));
+		$out .= $css ? '<span class="irc" style="' . ar_h(implode(';', $css)) . '">' . $txt . '</span>' : $txt;
+	}
+	return $out;
+}
+
 function ar_ago(int $ts): string
 {
 	if ($ts <= 0) return '—';
