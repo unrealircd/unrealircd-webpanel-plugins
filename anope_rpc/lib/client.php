@@ -373,7 +373,22 @@ function s_desc($s)    { return (string)ar_get($s, ['description', 'desc', 'info
 
 function a_name($a)    { return (string)ar_get($a, ['display', 'name', 'account'], '?'); }
 function a_reg($a)     { return (int)ar_get($a, ['registered', 'regtime', 'time_registered', 'created'], 0); }
-function a_seen($a)    { return (int)ar_get($a, ['lastseen', 'last_seen', 'seen', 'lastusermask_time'], 0); }
+/**
+ * Last seen time of an account. Anope 2.1 has no account-level "lastseen":
+ * it is stored per grouped nick (nicks.{nick}.lastseen), so take the most recent one.
+ */
+function a_seen($a)
+{
+	$seen = (int)ar_get($a, ['lastseen', 'last_seen', 'seen', 'lastusermask_time'], 0);
+	$n = ar_get($a, ['nicks', 'aliases', 'nicknames'], []);
+	if (is_array($n))
+		foreach ($n as $v)
+			if (is_array($v)) $seen = max($seen, (int)ar_get($v, ['lastseen', 'last_seen', 'seen'], 0));
+	// Someone is currently identified to the account: seen now
+	$users = ar_get($a, ['users'], []);
+	if (is_array($users) && $users) $seen = max($seen, time());
+	return $seen;
+}
 function a_email($a)   { return (string)ar_get($a, ['email', 'mail'], ''); }
 function a_nicks($a)
 {
